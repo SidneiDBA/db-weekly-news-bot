@@ -1,6 +1,7 @@
 from db import get_conn
 from llm import call_llm
 from datetime import date
+import os
 
 def generate_weekly():
     conn = get_conn()
@@ -25,6 +26,9 @@ def generate_weekly():
 
     md = call_llm(prompt)
 
+    # Create output directory if it doesn't exist
+    os.makedirs("output", exist_ok=True)
+    
     with open("output/weekly_brief.md", "w") as f:
         f.write(md)
 

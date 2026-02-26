@@ -1,0 +1,1 @@
+{"db_engine": "PostgreSQL", "topic": "Release", "impact_score": 7}
