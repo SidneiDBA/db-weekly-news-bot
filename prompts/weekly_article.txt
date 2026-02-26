@@ -1,0 +1,29 @@
+You are writing a Weekly Database Engineering Brief.
+
+Rules:
+- No speculation
+- Technical and objective
+- Focus on production systems
+- Markdown output
+
+Articles:
+{{articles}}
+
+Write:
+
+# 🗞️ Weekly Database Engineering Brief – {{date}}
+
+## 🔥 Top Updates This Week
+(short summary)
+
+## 🧠 Trends Observed
+(bullets)
+
+## 🎯 Why This Matters
+(real DBA impact)
+
+## 🛠️ Action Items for DBAs
+(practical actions)
+
+## 📎 Sources
+(list URLs)
