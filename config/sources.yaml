@@ -1,0 +1,39 @@
+sources:
+
+  vendors:
+    - name: PostgreSQL
+      type: rss
+      url: https://www.postgresql.org/about/news/rss.xml
+      category: release
+
+    - name: SQL Server Blog
+      type: rss
+      url: https://techcommunity.microsoft.com/rss/category?category.id=SQLServer
+      category: vendor
+
+    - name: Oracle Database Blog
+      type: rss
+      url: https://blogs.oracle.com/database/rss
+      category: vendor
+
+  cloud:
+    - name: AWS RDS
+      type: rss
+      url: https://aws.amazon.com/blogs/database/feed/
+      category: cloud
+
+    - name: Azure SQL
+      type: rss
+      url: https://techcommunity.microsoft.com/rss/category?category.id=AzureSQL
+      category: cloud
+
+  community:
+    - name: DBA StackExchange
+      type: rss
+      url: https://dba.stackexchange.com/feeds
+      category: community
+
+    - name: Planet PostgreSQL
+      type: rss
+      url: https://planet.postgresql.org/rss20.xml
+      category: community

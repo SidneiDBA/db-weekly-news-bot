@@ -1,7 +1,17 @@
 from db import get_conn
 from llm import call_llm
-from normalizer import normalize
 import json
+import re
+
+def normalize(text):
+    """Normalize text by removing extra whitespace and cleaning up content."""
+    if not text:
+        return ""
+    # Remove extra whitespace
+    text = re.sub(r'\s+', ' ', text)
+    # Strip leading/trailing whitespace
+    text = text.strip()
+    return text
 
 def classify():
     conn = get_conn()
