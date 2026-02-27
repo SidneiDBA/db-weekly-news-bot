@@ -29,6 +29,20 @@ def generate_weekly():
 
     md = call_llm(prompt)
 
+    # if the model returned something that parses as JSON it's probably the
+    # mock response (or an error) rather than a real markdown summary; in that
+    # case we refuse to overwrite the existing brief.
+    # if the output is valid JSON, treat as a failure (mock response)
+    import json as _json
+    try:
+        _json.loads(md)
+    except _json.JSONDecodeError:
+        # not JSON → good, proceed
+        pass
+    else:
+        # load succeeded and md was JSON
+        raise ValueError("LLM returned JSON instead of markdown")
+
     # Create output directory if it doesn't exist
     output_dir = os.path.join(root, "output")
     os.makedirs(output_dir, exist_ok=True)
