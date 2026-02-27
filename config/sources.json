@@ -1,30 +1,279 @@
 {
-  "sources": {
-    "vendors": [
-      {
-        "name": "Planet PostgreSQL",
-        "type": "rss",
-        "url": "https://planet.postgresql.org/rss20.xml",
-        "category": "release"
-      }
-    ],
-    "cloud": [
-      {
-        "name": "AWS RDS",
-        "type": "rss",
-        "url": "https://aws.amazon.com/blogs/database/feed/",
-        "category": "cloud"
-      }
-    ],
-    "community": [
-      {
-        "name": "SQLShack",
-        "type": "rss",
-        "url": "https://www.sqlshack.com/feed/",
-        "category": "community"
-      }
-    ]
+  "version": "2.0",
+  "global": {
+    "default_weight": 0.5,
+    "min_score_threshold": 0.6
+  },
+  "domains": {
+    "relational": {
+      "weight": 0.8,
+      "description": "Traditional RDBMS, indexing, optimization",
+      "tags": [
+        "sql",
+        "indexing",
+        "optimizer",
+        "performance",
+        "replication"
+      ],
+      "sources": [
+        {
+          "name": "DBA StackExchange",
+          "url": "https://planet.postgresql.org/rss20.xml",
+          "weight": 0.9,
+          "priority": "high"
+        },
+        {
+          "name": "Microsoft SQL Server Blog",
+          "url": "https://devblogs.microsoft.com/azure-sql/feed/",
+          "weight": 0.8,
+          "priority": "medium"
+        },
+        {
+          "name": "Postgres Weekly",
+          "url": "https://postgresweekly.com/rss/",
+          "weight": 0.85,
+          "priority": "high"
+        },
+        {
+          "name": "Percona Blog",
+          "url": "https://www.percona.com/blog/feed/",
+          "weight": 0.8,
+          "priority": "medium"
+        },
+        {
+          "name": "Brent Ozar Unlimited",
+          "url": "https://www.brentozar.com/blog/feed/",
+          "weight": 0.75,
+          "priority": "medium"
+        },
+        {
+          "name": "SQLServerCentral",
+          "url": "https://www.sqlservercentral.com/articles/feed",
+          "weight": 0.75,
+          "priority": "medium"
+        },
+        {
+          "name": "MariaDB Foundation",
+          "url": "https://mariadb.org/feed/",
+          "weight": 0.7,
+          "priority": "medium"
+        },
+        {
+          "name": "SQLShack",
+          "url": "https://www.sqlshack.com/feed/",
+          "weight": 0.7,
+          "priority": "low"
+        },
+        {
+          "name": "SQL Performance",
+          "url": "https://www.red-gate.com/simple-talk/feed/",
+          "weight": 0.8,
+          "priority": "high"
+        },
+        {
+          "name": "DBTA News",
+          "url": "https://clickhouse.com/rss.xml",
+          "weight": 0.65,
+          "priority": "low"
+        }
+      ]
+    },
+    "nosql": {
+      "weight": 0.7,
+      "description": "Distributed and NoSQL systems",
+      "tags": [
+        "distributed",
+        "cassandra",
+        "mongodb",
+        "sharding",
+        "scaling"
+      ],
+      "sources": [
+        {
+          "name": "MongoDB Blog",
+          "url": "https://www.mongodb.com/company/blog/rss",
+          "weight": 0.8
+        },
+        {
+          "name": "Redis Blog",
+          "url": "https://redis.io/blog/feed/",
+          "weight": 0.8
+        },
+        {
+          "name": "Neo4j Blog",
+          "url": "https://neo4j.com/blog/feed/",
+          "weight": 0.75
+        },
+        {
+          "name": "InfluxData Blog",
+          "url": "https://www.influxdata.com/blog/feed/",
+          "weight": 0.75
+        },
+        {
+          "name": "AWS DynamoDB Blog",
+          "url": "https://aws.amazon.com/blogs/database/feed/",
+          "weight": 0.7
+        },
+        {
+          "name": "CouchDB Blog",
+          "url": "https://blog.couchdb.org/feed.xml",
+          "weight": 0.7
+        },
+        {
+          "name": "NoSQL Weekly",
+          "url": "https://neo4j.com/blog/feed/",
+          "weight": 0.7
+        }
+      ]
+    },
+    "ai_data": {
+      "weight": 1.0,
+      "description": "AI + Databases + Vector Search",
+      "tags": [
+        "vector",
+        "embeddings",
+        "rag",
+        "llm",
+        "semantic search"
+      ],
+      "sources": [
+        {
+          "name": "OpenAI News",
+          "url": "https://openai.com/news/rss.xml",
+          "weight": 1.0
+        },
+        {
+          "name": "Google AI Blog",
+          "url": "https://blog.google/technology/ai/rss/",
+          "weight": 0.9
+        },
+        {
+          "name": "AWS Machine Learning Blog",
+          "url": "https://aws.amazon.com/blogs/machine-learning/feed/",
+          "weight": 0.9
+        },
+        {
+          "name": "Hugging Face Blog",
+          "url": "https://huggingface.co/blog/feed.xml",
+          "weight": 0.9
+        },
+        {
+          "name": "LangChain Blog",
+          "url": "https://blog.langchain.dev/rss/",
+          "weight": 0.85
+        },
+        {
+          "name": "Weaviate Blog",
+          "url": "https://weaviate.io/blog/rss.xml",
+          "weight": 0.85
+        },
+        {
+          "name": "SingleStore Blog",
+          "url": "https://www.singlestore.com/blog/feed/",
+          "weight": 0.8
+        }
+      ]
+    },
+    "storage": {
+      "weight": 0.9,
+      "description": "Lakehouse, storage engines, formats",
+      "tags": [
+        "iceberg",
+        "delta",
+        "parquet",
+        "storage engine"
+      ],
+      "sources": [
+        {
+          "name": "Snowflake Blog",
+          "url": "https://clickhouse.com/rss.xml",
+          "weight": 0.9
+        },
+        {
+          "name": "Databricks Blog",
+          "url": "https://www.starburst.io/blog/rss.xml",
+          "weight": 0.9
+        },
+        {
+          "name": "AWS Big Data",
+          "url": "https://aws.amazon.com/blogs/big-data/feed/",
+          "weight": 0.8
+        },
+        {
+          "name": "Google Cloud Blog",
+          "url": "https://cloudblog.withgoogle.com/rss/",
+          "weight": 0.8
+        },
+        {
+          "name": "DuckDB Blog",
+          "url": "https://duckdb.org/feed.xml",
+          "weight": 0.85
+        },
+        {
+          "name": "ClickHouse Blog",
+          "url": "https://clickhouse.com/rss.xml",
+          "weight": 0.8
+        },
+        {
+          "name": "Starburst Blog",
+          "url": "https://www.starburst.io/blog/rss.xml",
+          "weight": 0.7
+        }
+      ]
+    },
+    "data_protection": {
+      "weight": 0.8,
+      "description": "Security, compliance, governance",
+      "tags": [
+        "gdpr",
+        "encryption",
+        "data breach",
+        "governance"
+      ],
+      "sources": [
+        {
+          "name": "IAPP Privacy News",
+          "url": "https://iapp.org/news/feed/",
+          "weight": 0.8,
+          "priority": "high"
+        },
+        {
+          "name": "Krebs on Security",
+          "url": "https://krebsonsecurity.com/feed/",
+          "weight": 0.8,
+          "priority": "high"
+        },
+        {
+          "name": "Dark Reading",
+          "url": "https://www.darkreading.com/rss.xml",
+          "weight": 0.75,
+          "priority": "medium"
+        },
+        {
+          "name": "ISACA Now",
+          "url": "https://owasp.org/feed.xml",
+          "weight": 0.75,
+          "priority": "medium"
+        },
+        {
+          "name": "OWASP Blog",
+          "url": "https://owasp.org/feed.xml",
+          "weight": 0.8,
+          "priority": "high"
+        },
+        {
+          "name": "CISA Advisories",
+          "url": "https://www.cisa.gov/cybersecurity-advisories/all.xml",
+          "weight": 0.85,
+          "priority": "high"
+        },
+        {
+          "name": "Data Governance Institute",
+          "url": "https://iapp.org/news/feed/",
+          "weight": 0.7,
+          "priority": "medium"
+        }
+      ]
+    }
   }
 }
-
-

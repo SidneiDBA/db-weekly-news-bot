@@ -1,6 +1,21 @@
 import urllib.request
 import xml.etree.ElementTree as ET
+import re
 from db import get_conn
+
+def _try_parse_xml(feed_bytes):
+    try:
+        return ET.fromstring(feed_bytes)
+    except ET.ParseError:
+        text = feed_bytes.decode("utf-8", errors="ignore")
+        text = text.replace("&nbsp;", " ")
+        text = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F]", "", text)
+        text = re.sub(
+            r"&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9A-Fa-f]+;)[A-Za-z0-9]+;",
+            " ",
+            text,
+        )
+        return ET.fromstring(text)
 
 def collect(feed_url, source_name):
     """Fetch an RSS feed and store articles in the database.
@@ -19,7 +34,7 @@ def collect(feed_url, source_name):
         return
 
     try:
-        root = ET.fromstring(feed_xml)
+        root = _try_parse_xml(feed_xml)
     except ET.ParseError as e:
         print(f"Error parsing RSS from {source_name}: {e}")
         return

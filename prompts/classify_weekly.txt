@@ -1,13 +1,12 @@
-You are a senior Database Engineer.
+Evaluate this article for a senior data platform engineer.
 
-Classify the article below.
+Score from 0 to 1:
+- relevance
+- architectural_impact
+- production_impact
+- security_impact
 
-Return ONLY valid JSON.
-
-Fields:
-- db_engine: postgres | sqlserver | oracle | mysql | cloud | general
-- topic: performance | security | release | cost | reliability | tooling
-- impact_score: 1 (low) to 5 (critical for production)
+Return JSON only.
 
 Article:
 {{content}}

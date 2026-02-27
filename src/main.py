@@ -22,15 +22,36 @@ except json.JSONDecodeError as e:
     print(f"Error parsing {config_path}: {e}")
     config = {}
 
-# Flatten nested source categories
-for category in config.get("sources", {}).values():
-    if isinstance(category, list):
-        for s in category:
-            try:
-                collect(s["url"], s["name"])
-            except Exception as exc:
-                print(f"collector error for {s.get('name')}: {exc}")
+mode = os.environ.get("REPORT_MODE", "weekly").strip().lower()
+domains_to_process = None
+if mode == "ai_radar":
+    domains_to_process = ["ai_data"]
 
-classify()
+selected_sources = []
+
+# Support both config formats:
+# 1) legacy: {"sources": {"vendors": [...], ...}}
+# 2) v2: {"version":"2.0", "domains": {"relational": {"sources": [...]}}}
+if isinstance(config.get("domains"), dict):
+    for domain_name, domain_cfg in config.get("domains", {}).items():
+        if domains_to_process and domain_name not in domains_to_process:
+            continue
+        for source in domain_cfg.get("sources", []):
+            selected_sources.append(source.get("name", ""))
+            try:
+                collect(source["url"], source["name"])
+            except Exception as exc:
+                print(f"collector error for {source.get('name')} in {domain_name}: {exc}")
+else:
+    # legacy fallback
+    for category in config.get("sources", {}).values():
+        if isinstance(category, list):
+            for source in category:
+                try:
+                    collect(source["url"], source["name"])
+                except Exception as exc:
+                    print(f"collector error for {source.get('name')}: {exc}")
+
+classify(allowed_sources=selected_sources if selected_sources else None, mode=mode)
 dedupe()
-generate_weekly()
+generate_weekly(report_mode=mode, allowed_sources=selected_sources if selected_sources else None)

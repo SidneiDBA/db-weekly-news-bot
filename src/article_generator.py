@@ -2,27 +2,52 @@ from db import get_conn
 from llm import call_llm
 from datetime import date
 import os
+import json
 
-def generate_weekly():
+def generate_weekly(report_mode="weekly", allowed_sources=None):
     conn = get_conn()
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT r.title, r.url
-        FROM articles_raw r
-        JOIN articles_scored s ON s.raw_id = r.id
-        WHERE s.impact_score >= 3
-          AND s.is_duplicate = 0
-        ORDER BY s.impact_score DESC
-        LIMIT 7
-    """)
+    root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    config_path = os.path.join(root, "config", "sources.json")
+    min_score_threshold = 0.6
+    try:
+        with open(config_path) as config_file:
+            config = json.load(config_file)
+            min_score_threshold = float(config.get("global", {}).get("min_score_threshold", 0.6))
+    except Exception:
+        min_score_threshold = 0.6
+
+    if allowed_sources:
+        placeholders = ",".join(["?" for _ in allowed_sources])
+        query = f"""
+            SELECT r.title, r.url
+            FROM articles_raw r
+            JOIN articles_scored s ON s.raw_id = r.id
+            WHERE s.impact_score >= ?
+              AND s.is_duplicate = 0
+              AND r.source IN ({placeholders})
+            ORDER BY s.impact_score DESC
+            LIMIT 7
+        """
+        cur.execute(query, (min_score_threshold, *allowed_sources))
+    else:
+        cur.execute("""
+            SELECT r.title, r.url
+            FROM articles_raw r
+            JOIN articles_scored s ON s.raw_id = r.id
+            WHERE s.impact_score >= ?
+              AND s.is_duplicate = 0
+            ORDER BY s.impact_score DESC
+            LIMIT 7
+        """, (min_score_threshold,))
 
     articles = cur.fetchall()
     articles_md = "\n".join([f"- {t} ({u})" for t, u in articles])
 
     # work with absolute paths so script can be run from anywhere
-    root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    prompt_path = os.path.join(root, "prompts", "article_weekly.txt")
+    prompt_file = "article_ai_radar.txt" if report_mode == "ai_radar" else "article_weekly.txt"
+    prompt_path = os.path.join(root, "prompts", prompt_file)
     prompt = open(prompt_path).read()
     prompt = prompt.replace("{{articles}}", articles_md)
     prompt = prompt.replace("{{date}}", str(date.today()))
@@ -47,7 +72,8 @@ def generate_weekly():
     output_dir = os.path.join(root, "output")
     os.makedirs(output_dir, exist_ok=True)
     
-    with open(os.path.join(output_dir, "weekly_brief.md"), "w") as f:
+    output_file = "ai_radar_brief.md" if report_mode == "ai_radar" else "weekly_brief.md"
+    with open(os.path.join(output_dir, output_file), "w") as f:
         f.write(md)
 
     conn.close()

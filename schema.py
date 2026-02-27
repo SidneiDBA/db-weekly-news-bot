@@ -16,7 +16,7 @@ def init_db(conn):
             raw_id INTEGER,
             db_engine TEXT,
             topic TEXT,
-            impact_score INTEGER,
+            impact_score REAL,
             is_duplicate INTEGER DEFAULT 0
         )
     """)
