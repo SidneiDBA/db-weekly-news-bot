@@ -27,9 +27,9 @@ Focused on **production impact**, not generic tech news.
 
 ## 🧱 Architecture
 
-- Python
+- Python 3 (standard library only – no external package dependencies)
 - SQLite (no-cost)
-- LLM via Ollama (local) or free-tier APIs
+- LLM via Ollama (local) or free-tier APIs (requires [\"ollama\" CLI](https://ollama.com/) on the PATH)
 - GitHub Actions (weekly execution)
 - Markdown output
 
@@ -39,12 +39,15 @@ Focused on **production impact**, not generic tech news.
 
 Runs automatically **once per week** using GitHub Actions.
 
-Manual execution:
+Manual execution (requires Python 3, nothing else to install):
+
 ```bash
-python src/main.py
+cd db-weekly-news-bot
+python3 src/main.py
+```
 
+That's it – no `pip install` needed. The project uses only Python standard library modules.
 
-db-weekly-news-bot/
 ├── .github/
 │   └── workflows/
 │       └── weekly.yml

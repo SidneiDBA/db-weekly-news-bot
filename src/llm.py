@@ -22,6 +22,16 @@ def call_llm(prompt, use_ollama=None):
             "impact_score": 7
         })
     
+    # make sure the ollama binary is available before trying to call it
+    import shutil
+    if shutil.which("ollama") is None:
+        print("ollama executable not found on PATH; using mock response")
+        return json.dumps({
+            "db_engine": "PostgreSQL",
+            "topic": "Release",
+            "impact_score": 7
+        })
+    
     # Try to use ollama if enabled
     for attempt in range(2):
         try:
@@ -30,12 +40,13 @@ def call_llm(prompt, use_ollama=None):
                 input=prompt,
                 text=True,
                 capture_output=True,
-                timeout=60
+                timeout=300
             )
             if result.returncode == 0:
                 return result.stdout
             print(f"Ollama error: {result.stderr}")
         except Exception as e:
+            # catch any unexpected issue and fall back after a pause
             print(f"Error calling LLM: {e}")
         
         if attempt < 1:

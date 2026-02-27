@@ -20,16 +20,20 @@ def generate_weekly():
     articles = cur.fetchall()
     articles_md = "\n".join([f"- {t} ({u})" for t, u in articles])
 
-    prompt = open("prompts/weekly_article.txt").read()
+    # work with absolute paths so script can be run from anywhere
+    root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    prompt_path = os.path.join(root, "prompts", "article_weekly.txt")
+    prompt = open(prompt_path).read()
     prompt = prompt.replace("{{articles}}", articles_md)
     prompt = prompt.replace("{{date}}", str(date.today()))
 
     md = call_llm(prompt)
 
     # Create output directory if it doesn't exist
-    os.makedirs("output", exist_ok=True)
+    output_dir = os.path.join(root, "output")
+    os.makedirs(output_dir, exist_ok=True)
     
-    with open("output/weekly_brief.md", "w") as f:
+    with open(os.path.join(output_dir, "weekly_brief.md"), "w") as f:
         f.write(md)
 
     conn.close()
