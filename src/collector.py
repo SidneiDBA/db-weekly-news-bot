@@ -19,6 +19,53 @@ import xml.etree.ElementTree as ET
 import re
 from db import get_conn
 
+
+def _extract_urls(text):
+    if not text:
+        return []
+    href_urls = re.findall(r'href=["\'](https?://[^"\']+)["\']', text, flags=re.IGNORECASE)
+    raw_urls = re.findall(r'https?://[^\s<>")\']+', text)
+    seen = set()
+    urls = []
+    for candidate in href_urls + raw_urls:
+        if candidate not in seen:
+            seen.add(candidate)
+            urls.append(candidate)
+    return urls
+
+
+def _canonicalize_url(url):
+    if not url:
+        return url
+
+    stackexchange_match = re.match(
+        r"^(https?://[^/]*stackexchange\.com/questions/\d+)(?:/[^\s?#)]*)?.*$",
+        url,
+        flags=re.IGNORECASE,
+    )
+    if stackexchange_match:
+        return stackexchange_match.group(1) + "/"
+
+    return url
+
+
+def _repair_link(link, content):
+    link = _canonicalize_url(link)
+    candidates = _extract_urls(content)
+    if not candidates:
+        return link
+
+    candidates = [_canonicalize_url(candidate) for candidate in candidates]
+
+    if link in candidates:
+        return link
+
+    matching_prefixes = [url for url in candidates if url.startswith(link) and len(url) > len(link)]
+    if len(matching_prefixes) == 1:
+        return matching_prefixes[0]
+
+    return link
+
 def _try_parse_xml(feed_bytes):
     try:
         return ET.fromstring(feed_bytes)
@@ -89,10 +136,23 @@ def collect(feed_url, source_name):
         published = pub_elem.text if pub_elem is not None else ""
         content = desc_elem.text if desc_elem is not None else ""
 
+        original_link = link
+        link = _repair_link(link, content)
+
         if not title or not link:
             continue
 
         try:
+            if link != original_link and original_link:
+                cur.execute(
+                    """
+                    UPDATE articles_raw
+                    SET url = ?
+                    WHERE source = ? AND title = ? AND url = ?
+                    """,
+                    (link, source_name, title, original_link),
+                )
+
             cur.execute("""
                 INSERT OR IGNORE INTO articles_raw
                 (source, title, url, published_at, content)

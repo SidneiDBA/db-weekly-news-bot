@@ -105,6 +105,22 @@ python3 src/main.py
 
 Output will use canned JSON responses instead of the real LLM.
 
+### Option C: AI Radar Mode (LLM + AI/Data Sources)
+Generates `output/ai_radar_brief.md` using only the `ai_data` domain sources.
+
+```bash
+cd db-weekly-news-bot
+export USE_OLLAMA=true
+export REPORT_MODE=ai_radar
+python3 src/main.py
+```
+
+One-line alternative:
+
+```bash
+REPORT_MODE=ai_radar USE_OLLAMA=true python3 src/main.py
+```
+
 ---
 
 ## 🔧 Environment Variables
@@ -112,6 +128,7 @@ Output will use canned JSON responses instead of the real LLM.
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `USE_OLLAMA` | `false` | Set to `true` to use real Ollama LLM; `false` uses mock responses |
+| `REPORT_MODE` | `weekly` | `weekly` generates `weekly_brief.md`; `ai_radar` generates `ai_radar_brief.md` |
 
 **Example:**
 ```bash
@@ -211,6 +228,12 @@ conn.close()
 - Queries articles with `impact_score >= 3` and `is_duplicate = 0`
 - Uses LLM to generate human-readable summaries
 - Outputs formatted **weekly_brief.md**
+
+### 5. **URL Health Check** (`url_health.py`)
+- Runs automatically after brief generation
+- Extracts URLs from the generated Markdown output
+- Prints a summary of OK vs broken links in the run output
+- Exits the run with non-zero status when broken links are detected (CI-friendly)
 
 ---
 

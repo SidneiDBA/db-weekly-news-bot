@@ -19,9 +19,11 @@ from collector import collect
 from classifier import classify
 from deduper import dedupe
 from article_generator import generate_weekly
+from url_health import run_url_health_check
 import json
 
 import os
+import sys
 
 # determine project root (parent of this script)
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -71,3 +73,9 @@ else:
 classify(allowed_sources=selected_sources if selected_sources else None, mode=mode)
 dedupe()
 generate_weekly(report_mode=mode, allowed_sources=selected_sources if selected_sources else None)
+
+output_file = "ai_radar_brief.md" if mode == "ai_radar" else "weekly_brief.md"
+health_ok = run_url_health_check(os.path.join(ROOT, "output", output_file))
+if not health_ok:
+    print("Run failed due to broken URLs in generated output")
+    sys.exit(1)
