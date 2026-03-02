@@ -334,13 +334,23 @@ Generated **weekly_brief.md**:
 
 ## 📄 License
 
-[Add your license here]
+This project is licensed under the **GNU General Public License v3.0**.
+
+- SPDX identifier: `GPL-3.0-or-later`
+- Full license text: [LICENSE](LICENSE)
+- Optional source-file notice template: [COPYRIGHT_HEADER.txt](COPYRIGHT_HEADER.txt)
 
 ---
 
 ## 👤 Contributing
 
-[Add contribution guidelines here]
+Contributions are welcome.
+
+- Fork the repository and create a feature branch.
+- Keep changes focused and aligned with the existing project style.
+- Run the project locally (`python3 src/main.py`) to validate behavior.
+- Open a Pull Request with a clear summary of what changed and why.
+- By contributing, you agree your contributions are licensed under `GPL-3.0-or-later`.
 
 ---
 
