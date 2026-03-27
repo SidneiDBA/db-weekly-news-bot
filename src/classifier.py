@@ -128,7 +128,7 @@ def classify(allowed_sources=None, mode="weekly"):
     prompt_path = os.path.join(root, "prompts", prompt_file)
 
     if allowed_sources:
-        placeholders = ",".join(["?" for _ in allowed_sources])
+        placeholders = ",".join(["%s" for _ in allowed_sources])
         query = f"""
             SELECT id, source, title, content
             FROM articles_raw
@@ -147,7 +147,7 @@ def classify(allowed_sources=None, mode="weekly"):
         prompt = open(prompt_path).read()
         prompt = prompt.replace("{{content}}", normalize(content))
 
-        response = call_llm(prompt)
+        response = call_llm(prompt, response_format="json")
 
         try:
             llm_raw = json.loads(response)
@@ -180,7 +180,7 @@ def classify(allowed_sources=None, mode="weekly"):
         cur.execute("""
             INSERT INTO articles_scored
             (raw_id, db_engine, topic, impact_score)
-            VALUES (?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s)
         """, (
             raw_id,
             llm_raw.get("db_engine", "general"),

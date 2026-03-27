@@ -1,2 +1,2 @@
-# This project uses only Python standard library modules.
-# No external package dependencies.
+# PostgreSQL driver
+psycopg[binary]>=3.2.0

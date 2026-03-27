@@ -106,13 +106,13 @@ def generate_weekly(report_mode="weekly", allowed_sources=None):
         min_score_threshold = 0.6
 
     if allowed_sources:
-        placeholders = ",".join(["?" for _ in allowed_sources])
+        placeholders = ",".join(["%s" for _ in allowed_sources])
         query = f"""
             SELECT r.title, r.url
             FROM articles_raw r
             JOIN articles_scored s ON s.raw_id = r.id
-            WHERE s.impact_score >= ?
-              AND s.is_duplicate = 0
+            WHERE s.impact_score >= %s
+              AND s.is_duplicate = FALSE
               AND r.source IN ({placeholders})
             ORDER BY s.impact_score DESC
             LIMIT 7
@@ -123,8 +123,8 @@ def generate_weekly(report_mode="weekly", allowed_sources=None):
             SELECT r.title, r.url
             FROM articles_raw r
             JOIN articles_scored s ON s.raw_id = r.id
-            WHERE s.impact_score >= ?
-              AND s.is_duplicate = 0
+            WHERE s.impact_score >= %s
+              AND s.is_duplicate = FALSE
             ORDER BY s.impact_score DESC
             LIMIT 7
         """, (min_score_threshold,))
@@ -140,7 +140,7 @@ def generate_weekly(report_mode="weekly", allowed_sources=None):
     prompt = prompt.replace("{{articles}}", articles_md)
     prompt = prompt.replace("{{date}}", str(date.today()))
 
-    md = call_llm(prompt)
+    md = call_llm(prompt, response_format="markdown")
 
     # if the model returned something that parses as JSON it's probably the
     # mock response (or an error) rather than a real markdown summary; in that

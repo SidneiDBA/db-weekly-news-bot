@@ -18,11 +18,39 @@ import subprocess
 import json
 import time
 import os
+import re
 
-def call_llm(prompt, use_ollama=None):
+def _mock_json_response():
+    return json.dumps({
+        "db_engine": "PostgreSQL",
+        "topic": "Release",
+        "relevance": 0.7,
+        "architectural_impact": 0.7,
+        "production_impact": 0.7,
+        "security_impact": 0.6,
+        "retrieval_complexity": 0.5,
+    })
+
+
+def _mock_markdown_response(prompt):
+    urls = re.findall(r"https?://[^\s)]+", prompt)
+    sources = "\n".join(f"- {url}" for url in dict.fromkeys(urls[:7]))
+    if not sources:
+        sources = "- https://example.com"
+
+    return (
+        "## Weekly Database Engineering Brief\n\n"
+        "- Mock summary generated because `USE_OLLAMA` is disabled.\n\n"
+        "## 📎 Sources\n"
+        f"{sources}\n"
+    )
+
+
+def call_llm(prompt, use_ollama=None, response_format="json"):
     """Call the LLM using ollama if available, otherwise return mock response.
     
     Set use_ollama=False to force mock responses.
+    response_format can be "json" or "markdown".
     """
     
     # Check if we should try ollama
@@ -32,21 +60,17 @@ def call_llm(prompt, use_ollama=None):
     if not use_ollama:
         # Return mock response for development/testing
         print("Using mock LLM response (set USE_OLLAMA=true to use actual LLM)")
-        return json.dumps({
-            "db_engine": "PostgreSQL",
-            "topic": "Release",
-            "impact_score": 7
-        })
+        if response_format == "markdown":
+            return _mock_markdown_response(prompt)
+        return _mock_json_response()
     
     # make sure the ollama binary is available before trying to call it
     import shutil
     if shutil.which("ollama") is None:
         print("ollama executable not found on PATH; using mock response")
-        return json.dumps({
-            "db_engine": "PostgreSQL",
-            "topic": "Release",
-            "impact_score": 7
-        })
+        if response_format == "markdown":
+            return _mock_markdown_response(prompt)
+        return _mock_json_response()
     
     # Try to use ollama if enabled
     for attempt in range(2):
@@ -70,8 +94,6 @@ def call_llm(prompt, use_ollama=None):
     
     # Fallback to mock response
     print("Fallback: Using mock LLM response")
-    return json.dumps({
-        "db_engine": "PostgreSQL",
-        "topic": "Release",
-        "impact_score": 7
-    })
+    if response_format == "markdown":
+        return _mock_markdown_response(prompt)
+    return _mock_json_response()

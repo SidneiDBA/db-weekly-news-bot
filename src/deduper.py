@@ -22,7 +22,7 @@ def dedupe():
 
     cur.execute("""
         UPDATE articles_scored
-        SET is_duplicate = 1
+        SET is_duplicate = TRUE
         WHERE raw_id IN (
             SELECT r1.id
             FROM articles_raw r1

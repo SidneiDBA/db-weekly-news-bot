@@ -36,6 +36,9 @@ def _check_url(url, timeout=10):
         with urllib.request.urlopen(request, timeout=timeout) as response:
             return True, response.status, ""
     except HTTPError as exc:
+        # Some sites block automated clients with 403 even when the URL is valid.
+        if exc.code == 403:
+            return True, exc.code, "forbidden by remote host"
         return False, exc.code, str(exc)
     except URLError as exc:
         return False, None, str(exc)

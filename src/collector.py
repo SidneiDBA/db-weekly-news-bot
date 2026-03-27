@@ -17,6 +17,7 @@
 import urllib.request
 import xml.etree.ElementTree as ET
 import re
+import os
 from db import get_conn
 
 
@@ -80,10 +81,36 @@ def _try_parse_xml(feed_bytes):
         )
         return ET.fromstring(text)
 
+def _check_feed_health(feed_url, timeout=5):
+    """Quick health check for RSS feed URL.
+    
+    Returns True if feed responds within timeout, False otherwise.
+    Uses a short timeout to avoid blocking on slow/dead feeds.
+    """
+    try:
+        req = urllib.request.Request(
+            feed_url,
+            headers={'User-Agent': 'Mozilla/5.0 (compatible; DBWeeklyBot/1.0)'}
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            # Just check if we can connect and get a response
+            return response.status == 200
+    except Exception as e:
+        print(f"Feed health check failed for {feed_url}: {e}")
+        return False
+
 def collect(feed_url, source_name):
     """Fetch an RSS feed and store articles in the database.
     Uses only stdlib: urllib + xml.etree.ElementTree (no external deps).
+    
+    Skips feeds that fail a quick health check (if enabled).
     """
+    # Optional pre-flight health check with short timeout
+    health_check_timeout = int(os.environ.get('RSS_HEALTH_CHECK_TIMEOUT', '0'))
+    if health_check_timeout > 0:
+        if not _check_feed_health(feed_url, timeout=health_check_timeout):
+            print(f"Skipping {source_name} - feed did not respond within {health_check_timeout}s")
+            return
     try:
         # Add User-Agent header (many servers block requests without it)
         req = urllib.request.Request(
@@ -147,16 +174,17 @@ def collect(feed_url, source_name):
                 cur.execute(
                     """
                     UPDATE articles_raw
-                    SET url = ?
-                    WHERE source = ? AND title = ? AND url = ?
+                    SET url = %s
+                    WHERE source = %s AND title = %s AND url = %s
                     """,
                     (link, source_name, title, original_link),
                 )
 
             cur.execute("""
-                INSERT OR IGNORE INTO articles_raw
+                INSERT INTO articles_raw
                 (source, title, url, published_at, content)
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (url) DO NOTHING
             """, (source_name, title, link, published, content))
         except Exception as e:
             print(f"DB error for {title}: {e}")

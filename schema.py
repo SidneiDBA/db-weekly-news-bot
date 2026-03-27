@@ -18,7 +18,7 @@ def init_db(conn):
     cur = conn.cursor()
     cur.execute("""
         CREATE TABLE IF NOT EXISTS articles_raw (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id BIGSERIAL PRIMARY KEY,
             source TEXT,
             title TEXT,
             url TEXT UNIQUE,
@@ -28,12 +28,12 @@ def init_db(conn):
     """)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS articles_scored (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            raw_id INTEGER,
+            id BIGSERIAL PRIMARY KEY,
+            raw_id BIGINT REFERENCES articles_raw(id),
             db_engine TEXT,
             topic TEXT,
             impact_score REAL,
-            is_duplicate INTEGER DEFAULT 0
+            is_duplicate BOOLEAN DEFAULT FALSE
         )
     """)
     conn.commit()

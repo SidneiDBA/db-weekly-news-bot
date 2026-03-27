@@ -27,8 +27,8 @@ Focused on **production impact**, not generic tech news.
 
 ## 🧱 Architecture
 
-- Python 3 (standard library only – no external package dependencies)
-- SQLite (no-cost, auto-initialized)
+- Python 3 + `psycopg` PostgreSQL driver
+- PostgreSQL (local instance, auto-created database)
 - LLM via **Ollama** (local, self-hosted)
 - GitHub Actions (weekly execution)
 - Markdown output
@@ -41,6 +41,17 @@ Focused on **production impact**, not generic tech news.
 Ensure Python 3 is installed:
 ```bash
 python3 --version
+```
+
+### 1.5. PostgreSQL (Local)
+Ensure PostgreSQL is running locally. If your user cannot auto-create databases, create it manually:
+```bash
+createdb db_weekly_new
+```
+
+### 1.6. Install Python Dependencies
+```bash
+pip install -r requirements.txt
 ```
 
 ### 2. Ollama CLI Installation (Required for Real LLM)
@@ -90,16 +101,18 @@ Requires Ollama running (see Prerequisites above)
 ```bash
 cd db-weekly-news-bot
 export USE_OLLAMA=true
+export RSS_HEALTH_CHECK_TIMEOUT=5
 python3 src/main.py
 ```
 
 **First run may take 2-5 minutes** as the model loads into memory.
 
 ### Option B: With Mock Responses (Testing/Development)
-No external dependencies needed:
+No LLM dependency needed:
 
 ```bash
 cd db-weekly-news-bot
+export RSS_HEALTH_CHECK_TIMEOUT=5
 python3 src/main.py
 ```
 
@@ -112,6 +125,7 @@ Generates `output/ai_radar_brief.md` using only the `ai_data` domain sources.
 cd db-weekly-news-bot
 export USE_OLLAMA=true
 export REPORT_MODE=ai_radar
+export RSS_HEALTH_CHECK_TIMEOUT=5
 python3 src/main.py
 ```
 
@@ -119,6 +133,37 @@ One-line alternative:
 
 ```bash
 REPORT_MODE=ai_radar USE_OLLAMA=true python3 src/main.py
+```
+
+Recommended one-liner with RSS pre-check enabled:
+
+```bash
+REPORT_MODE=ai_radar USE_OLLAMA=true RSS_HEALTH_CHECK_TIMEOUT=5 python3 src/main.py
+```
+
+### Option D: Local `.env` Setup (Copy/Paste)
+Create a `.env` file in the project root so you don't need to export variables each run:
+
+```bash
+cat > .env << 'EOF'
+USE_OLLAMA=true
+REPORT_MODE=weekly
+RSS_HEALTH_CHECK_TIMEOUT=5
+
+# PostgreSQL settings
+PGHOST=localhost
+PGPORT=5432
+PGUSER=db_weekly_new_user
+PGPASSWORD=change_me
+PGDATABASE=db_weekly_new
+PGMAINTENANCE_DB=postgres
+EOF
+```
+
+Then run:
+
+```bash
+python3 src/main.py
 ```
 
 ---
@@ -129,6 +174,15 @@ REPORT_MODE=ai_radar USE_OLLAMA=true python3 src/main.py
 |----------|---------|---------|
 | `USE_OLLAMA` | `false` | Set to `true` to use real Ollama LLM; `false` uses mock responses |
 | `REPORT_MODE` | `weekly` | `weekly` generates `weekly_brief.md`; `ai_radar` generates `ai_radar_brief.md` |
+| `RSS_HEALTH_CHECK_TIMEOUT` | `0` | Seconds to wait for RSS feed response; `0` disables health check (waits indefinitely); set to `3-5` to skip slow/dead feeds |
+| `PGHOST` | (unset) | PostgreSQL host; unset uses local socket/peer auth |
+| `PGPORT` | (unset) | PostgreSQL port; set when using TCP host |
+| `PGUSER` | current OS user | PostgreSQL user |
+| `PGPASSWORD` | `` | PostgreSQL password |
+| `PGDATABASE` | `db_weekly_new` | Target database (auto-created if missing) |
+| `PGMAINTENANCE_DB` | `postgres` | Admin database used to create `PGDATABASE` |
+
+The app also auto-loads these values from a local `.env` file in the project root.
 
 **Example:**
 ```bash
@@ -157,12 +211,12 @@ db-weekly-news-bot/
 │   ├── deduper.py                     # Removes duplicate articles
 │   ├── article_generator.py           # Generates Markdown brief
 │   ├── llm.py                         # LLM integration (Ollama/mock)
-│   ├── db.py                          # SQLite connection manager
+│   ├── db.py                          # PostgreSQL connection manager
 │   ├── schema.py                      # Database schema
 │   └── __pycache__/
 ├── output/
 │   └── weekly_brief.md                # Generated output
-├── db_news.db                         # SQLite database (auto-created)
+├── (no local .db file)               # Data stored in PostgreSQL
 ├── requirements.txt
 ├── schema.py
 └── README.md
@@ -172,7 +226,7 @@ db-weekly-news-bot/
 
 ## 🗄️ Database
 
-The project uses **SQLite** with automatic schema initialization.
+The project uses **PostgreSQL** with automatic database and schema initialization.
 
 ### Tables
 - **articles_raw**: Raw articles from RSS feeds
@@ -185,10 +239,16 @@ The project uses **SQLite** with automatic schema initialization.
 
 From Python:
 ```python
-import sqlite3
+import psycopg
 from schema import init_db
 
-conn = sqlite3.connect("db_news.db")
+conn = psycopg.connect(
+   host="localhost",
+   port=5432,
+   user="postgres",
+   password="your_password",
+   dbname="db_weekly_new",
+)
 init_db(conn)  # Ensure schema exists
 cursor = conn.cursor()
 
@@ -213,19 +273,21 @@ conn.close()
 
 ### 1. **Collector** (`collector.py`)
 - Fetches articles from configured RSS sources
+- Optionally performs a fast pre-flight RSS health check before full fetch
+- Skips feeds that fail to respond within `RSS_HEALTH_CHECK_TIMEOUT`
 - Stores raw articles in `articles_raw` table
 
 ### 2. **Classifier** (`classifier.py`)
 - Uses Ollama LLM to classify each article
-- Extracts: `db_engine`, `topic`, `impact_score` (1-10)
+- Extracts: `db_engine`, `topic`, and relevance signals used to compute `impact_score` (0.0-1.0)
 - Stores in `articles_scored` table
 
 ### 3. **Deduper** (`deduper.py`)
-- Marks duplicate articles with `is_duplicate = 1`
+- Marks duplicate articles with `is_duplicate = TRUE`
 - Prevents redundant content in final brief
 
 ### 4. **Article Generator** (`article_generator.py`)
-- Queries articles with `impact_score >= 3` and `is_duplicate = 0`
+- Queries articles with `impact_score >= 3` and `is_duplicate = FALSE`
 - Uses LLM to generate human-readable summaries
 - Outputs formatted **weekly_brief.md**
 
@@ -278,7 +340,20 @@ This is **normal** if `USE_OLLAMA=true` but Ollama isn't installed. The script f
 - **Subsequent runs:** Should complete in seconds once loaded
 - **Check model status:** `ollama list`
 
-### SQLite "table does not exist" error
+### Pipeline hangs on slow RSS feeds
+**Solution:** Enable RSS pre-check and skip slow/unavailable feeds:
+```bash
+RSS_HEALTH_CHECK_TIMEOUT=5 python3 src/main.py
+```
+Use `3-5` seconds in normal environments, or `0` to disable pre-check.
+
+### PostgreSQL authentication error
+**Solution:** Check `PGUSER` and `PGPASSWORD`, and verify PostgreSQL is running locally.
+
+### PostgreSQL "database does not exist" error
+**Solution:** The app auto-creates `PGDATABASE` from `PGMAINTENANCE_DB`; ensure your role has `CREATEDB` privilege.
+
+### PostgreSQL "table does not exist" error
 **Solution:** The schema is auto-initialized on first run. If you're querying directly, wrap in:
 ```python
 from schema import init_db
@@ -327,7 +402,7 @@ USE_OLLAMA=true python3 src/main.py
 - Added `USE_OLLAMA` environment variable for easy LLM toggle
 - Improved error messages to show full paths
 - Graceful degradation when Ollama is unavailable
-- Database initialization automatic (no manual setup needed)
+- Database and schema initialization automatic (no manual setup needed)
 
 ---
 
@@ -381,4 +456,4 @@ Contributions are welcome.
 
 - [Ollama Documentation](https://ollama.com/docs)
 - [neural-chat Model](https://ollama.com/library/neural-chat)
-- [SQLite Documentation](https://www.sqlite.org/docs.html)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
