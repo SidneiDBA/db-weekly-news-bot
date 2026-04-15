@@ -19,8 +19,15 @@ from functools import lru_cache
 import getpass
 from pathlib import Path
 
-import psycopg
-from psycopg import sql
+try:
+    import psycopg
+    from psycopg import sql
+except ModuleNotFoundError as exc:
+    psycopg = None
+    sql = None
+    _psycopg_import_error = exc
+else:
+    _psycopg_import_error = None
 from schema import init_db
 
 
@@ -53,6 +60,12 @@ def _db_settings():
 
 
 def _connect(dbname):
+    if psycopg is None:
+        raise RuntimeError(
+            "Missing dependency 'psycopg'. Install requirements and run with the project venv, "
+            "for example: /home/srinc/.venv/bin/python src/main.py"
+        ) from _psycopg_import_error
+
     settings = _db_settings()
     conn_kwargs = {
         "dbname": dbname,
@@ -69,6 +82,12 @@ def _connect(dbname):
 
 @lru_cache(maxsize=1)
 def _ensure_database_exists():
+    if sql is None:
+        raise RuntimeError(
+            "Missing dependency 'psycopg'. Install requirements and run with the project venv, "
+            "for example: /home/srinc/.venv/bin/python src/main.py"
+        ) from _psycopg_import_error
+
     settings = _db_settings()
     target_db = settings["database"]
 

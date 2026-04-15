@@ -1,0 +1,403 @@
+{
+  "ai_data": {
+    "weight": 1.0,
+    "description": "AI + Databases + Vector Search",
+    "tags": [
+      "vector",
+      "embeddings",
+      "rag",
+      "llm",
+      "semantic search",
+      "databases",
+      "infrastructure"
+    ],
+    "sources": [
+      { "name": "OpenAI News", "url": "https://openai.com/news/rss.xml", "weight": 1.0 },
+      { "name": "Google AI Blog", "url": "https://blog.google/technology/ai/rss/", "weight": 0.95 },
+      { "name": "AWS Machine Learning Blog", "url": "https://aws.amazon.com/blogs/machine-learning/feed/", "weight": 0.9 },
+      { "name": "Hugging Face Blog", "url": "https://huggingface.co/blog/feed.xml", "weight": 0.9 },
+      { "name": "LangChain Blog", "url": "https://blog.langchain.dev/rss/", "weight": 0.85 },
+      { "name": "Weaviate Blog", "url": "https://weaviate.io/blog/rss.xml", "weight": 0.85 },
+      { "name": "SingleStore Blog", "url": "https://www.singlestore.com/blog/feed/", "weight": 0.8 },
+      { "name": "NVIDIA Technical Blog", "url": "https://developer.nvidia.com/blog/feed/", "weight": 0.95 },
+      { "name": "Meta AI Research Blog", "url": "https://ai.facebook.com/blog/rss/", "weight": 0.9 },
+      { "name": "Microsoft Research Blog", "url": "https://www.microsoft.com/en-us/research/feed/", "weight": 0.9 },
+      { "name": "Databricks Engineering Blog", "url": "https://www.databricks.com/blog/feed", "weight": 0.9 },
+      { "name": "Snowflake Blog", "url": "https://www.snowflake.com/blog/feed/", "weight": 0.85 },
+      { "name": "Pinecone Blog", "url": "https://www.pinecone.io/feed.xml", "weight": 0.85 },
+      { "name": "Milvus/Zilliz Blog", "url": "https://zilliz.com/blog/rss.xml", "weight": 0.85 },
+      { "name": "Elastic Blog", "url": "https://www.elastic.co/blog/feed", "weight": 0.8 },
+      { "name": "MongoDB Blog", "url": "https://www.mongodb.com/blog/rss", "weight": 0.8 },
+      { "name": "PostgreSQL News", "url": "https://www.postgresql.org/list/announce/rss/", "weight": 0.75 },
+      { "name": "ClickHouse Blog", "url": "https://clickhouse.com/blog/rss.xml", "weight": 0.8 },
+      { "name": "Redpanda Blog", "url": "https://redpanda.com/blog/rss.xml", "weight": 0.8 },
+      { "name": "Confluent Kafka Blog", "url": "https://www.confluent.io/blog/feed/", "weight": 0.8 },
+      { "name": "MLOps Community Blog", "url": "https://mlops.community/feed/", "weight": 0.75 },
+      { "name": "ArXiv ML", "url": "https://export.arxiv.org/rss/cs.LG", "weight": 0.95 },
+      { "name": "ArXiv CL", "url": "https://export.arxiv.org/rss/cs.CL", "weight": 0.95 }
+    ]
+  },
+
+  "ai_infrastructure": {
+    "weight": 1.0,
+    "description": "AI Infrastructure + Distributed Systems + Performance Engineering",
+    "tags": [
+      "distributed systems",
+      "scalability",
+      "gpu",
+      "mlops",
+      "orchestration",
+      "kubernetes",
+      "observability"
+    ],
+    "sources": [
+      { "name": "NVIDIA Technical Blog", "url": "https://developer.nvidia.com/blog/feed/", "weight": 1.0 },
+      { "name": "Google Cloud AI/ML", "url": "https://cloud.google.com/blog/topics/ai-ml/feed", "weight": 0.95 },
+      { "name": "AWS Architecture Blog", "url": "https://aws.amazon.com/blogs/architecture/feed/", "weight": 0.9 },
+      { "name": "Azure AI Blog", "url": "https://azure.microsoft.com/en-us/blog/topics/ai-machine-learning/feed/", "weight": 0.9 },
+      { "name": "Kubernetes Blog", "url": "https://kubernetes.io/feed.xml", "weight": 0.85 },
+      { "name": "Kubeflow Blog", "url": "https://blog.kubeflow.org/feed.xml", "weight": 0.85 },
+      { "name": "Ray.io Blog", "url": "https://www.anyscale.com/blog/rss.xml", "weight": 0.85 },
+      { "name": "MLflow Blog", "url": "https://mlflow.org/blog/feed.xml", "weight": 0.8 },
+      { "name": "Prometheus Blog", "url": "https://prometheus.io/blog/index.xml", "weight": 0.75 },
+      { "name": "Grafana Blog", "url": "https://grafana.com/blog/index.xml", "weight": 0.75 },
+      { "name": "HashiCorp Blog", "url": "https://www.hashicorp.com/blog/feed.xml", "weight": 0.75 },
+      { "name": "CNCF Blog", "url": "https://www.cncf.io/feed/", "weight": 0.75 }
+    ]
+  },
+
+  "data_engineering": {
+    "weight": 1.0,
+    "description": "Data Engineering + Pipelines + Lakehouse",
+    "tags": ["etl", "elt", "pipelines", "lakehouse", "data lakes", "orchestration"],
+    "sources": [
+      { "name": "Databricks Blog", "url": "https://www.databricks.com/blog/feed", "weight": 1.0 },
+      { "name": "Snowflake Blog", "url": "https://www.snowflake.com/blog/feed/", "weight": 0.95 },
+      { "name": "Airflow Blog", "url": "https://airflow.apache.org/blog/index.xml", "weight": 0.9 },
+      { "name": "dbt Labs Blog", "url": "https://www.getdbt.com/blog/rss.xml", "weight": 0.9 },
+      { "name": "Fivetran Blog", "url": "https://www.fivetran.com/blog/rss.xml", "weight": 0.85 },
+      { "name": "Apache Spark Blog", "url": "https://spark.apache.org/feed.xml", "weight": 0.85 },
+      { "name": "Apache Iceberg Blog", "url": "https://iceberg.apache.org/feed.xml", "weight": 0.8 },
+      { "name": "Apache Hudi Blog", "url": "https://hudi.apache.org/feed.xml", "weight": 0.8 }
+    ]
+  },
+
+  "databases": {
+    "weight": 1.0,
+    "description": "Databases + Storage Engines + Query Systems",
+    "tags": ["sql", "nosql", "newsql", "columnar", "vector db", "storage engines"],
+    "sources": [
+      { "name": "PostgreSQL News", "url": "https://www.postgresql.org/list/announce/rss/", "weight": 1.0 },
+      { "name": "MySQL Blog", "url": "https://blogs.oracle.com/mysql/rss", "weight": 0.9 },
+      { "name": "MongoDB Blog", "url": "https://www.mongodb.com/blog/rss", "weight": 0.9 },
+      { "name": "ClickHouse Blog", "url": "https://clickhouse.com/blog/rss.xml", "weight": 0.9 },
+      { "name": "Cassandra Blog", "url": "https://cassandra.apache.org/_site/blog/feed.xml", "weight": 0.85 },
+      { "name": "CockroachDB Blog", "url": "https://www.cockroachlabs.com/blog/index.xml", "weight": 0.85 },
+      { "name": "PingCAP/TiDB Blog", "url": "https://www.pingcap.com/blog/feed/", "weight": 0.85 },
+      { "name": "FoundationDB Blog", "url": "https://www.foundationdb.org/blog/feed.xml", "weight": 0.8 }
+    ]
+  },
+
+  "streaming": {
+    "weight": 1.0,
+    "description": "Streaming Systems + Real-Time Data + Event Processing",
+    "tags": ["kafka", "streaming", "real-time", "event-driven", "flink", "pulsar"],
+    "sources": [
+      { "name": "Confluent Blog", "url": "https://www.confluent.io/blog/feed/", "weight": 1.0 },
+      { "name": "Redpanda Blog", "url": "https://redpanda.com/blog/rss.xml", "weight": 0.95 },
+      { "name": "Apache Flink Blog", "url": "https://flink.apache.org/feed.xml", "weight": 0.9 },
+      { "name": "Apache Pulsar Blog", "url": "https://pulsar.apache.org/blog/index.xml", "weight": 0.9 },
+      { "name": "Materialize Blog", "url": "https://materialize.com/feed/", "weight": 0.85 },
+      { "name": "Vectorized Blog", "url": "https://vectorized.io/blog/rss.xml", "weight": 0.85 }
+    ]
+  },
+
+  "mlops": {
+    "weight": 1.0,
+    "description": "MLOps + Model Deployment + Monitoring + Lifecycle",
+    "tags": ["mlops", "deployment", "monitoring", "model lifecycle", "ci/cd", "serving"],
+    "sources": [
+      { "name": "MLOps Community", "url": "https://mlops.community/feed/", "weight": 1.0 },
+      { "name": "Seldon Blog", "url": "https://www.seldon.io/feed", "weight": 0.9 },
+      { "name": "BentoML Blog", "url": "https://www.bentoml.com/blog/rss.xml", "weight": 0.9 },
+      { "name": "Weights & Biases Blog", "url": "https://wandb.ai/site/blog?format=rss", "weight": 0.85 },
+      { "name": "Neptune.ai Blog", "url": "https://neptune.ai/blog/feed", "weight": 0.85 },
+      { "name": "Arize AI Blog", "url": "https://arize.com/blog/feed/", "weight": 0.85 }
+    ]
+  },
+
+  "data_governance": {
+    "weight": 1.0,
+    "description": "Data Governance + Lineage + Compliance",
+    "tags": ["governance", "lineage", "catalog", "privacy", "compliance", "metadata"],
+    "sources": [
+      { "name": "DataHub Blog", "url": "https://datahubproject.io/blog/index.xml", "weight": 0.9 },
+      { "name": "Collibra Blog", "url": "https://www.collibra.com/us/en/blog/rss", "weight": 0.9 },
+      { "name": "Apache Atlas Blog", "url": "https://atlas.apache.org/feed.xml", "weight": 0.85 },
+      { "name": "OpenMetadata Blog", "url": "https://open-metadata.org/feed.xml", "weight": 0.85 }
+    ]
+  },
+
+  "data_quality": {
+    "weight": 1.0,
+    "description": "Data Quality + Validation + Reliability",
+    "tags": ["data quality", "validation", "testing", "anomaly detection", "reliability"],
+    "sources": [
+      { "name": "Great Expectations Blog", "url": "https://greatexpectations.io/blog/rss.xml", "weight": 0.95 },
+      { "name": "Monte Carlo Data Blog", "url": "https://www.montecarlodata.com/blog/feed/", "weight": 0.9 },
+      { "name": "Soda Data Blog", "url": "https://www.soda.io/blog/rss.xml", "weight": 0.85 }
+    ]
+  },
+
+  "data_modeling": {
+    "weight": 1.0,
+    "description": "Data Modeling + Schema Design + Vector Schema",
+    "tags": ["data modeling", "schema design", "dimensional modeling", "relational modeling", "vector schema"],
+    "sources": [
+      { "name": "dbt Labs Blog", "url": "https://www.getdbt.com/blog/rss.xml", "weight": 0.9 },
+      { "name": "Vertabelo Blog", "url": "https://www.vertabelo.com/blog/feed/", "weight": 0.85 },
+      { "name": "Erwin Blog", "url": "https://erwin.com/blog/feed/", "weight": 0.8 }
+    ]
+  },
+
+  "platform_engineering": {
+    "weight": 1.0,
+    "description": "Platform Engineering + Internal Developer Platforms",
+    "tags": ["platform engineering", "idp", "internal platforms", "automation", "developer experience"],
+    "sources": [
+      { "name": "Humanitec Blog", "url": "https://humanitec.com/blog/rss.xml", "weight": 0.95 },
+      { "name": "Platform Engineering Org", "url": "https://platformengineering.org/blog/rss.xml", "weight": 0.9 },
+      { "name": "Backstage Blog", "url": "https://backstage.io/blog/index.xml", "weight": 0.85 }
+    ]
+  },
+
+  "storage_systems": {
+    "weight": 1.0,
+    "description": "Distributed Storage + Filesystems + Object Storage",
+    "tags": ["storage", "distributed storage", "object storage", "file systems", "io"],
+    "sources": [
+      { "name": "Ceph Blog", "url": "https://ceph.io/feed/", "weight": 0.9 },
+      { "name": "MinIO Blog", "url": "https://blog.min.io/index.xml", "weight": 0.9 },
+      { "name": "HDFS Blog", "url": "https://hadoop.apache.org/blog/feed.xml", "weight": 0.85 }
+    ]
+  },
+
+  "networking_for_ai": {
+    "weight": 1.0,
+    "description": "Networking for AI Clusters + Low Latency Systems",
+    "tags": ["networking", "infiniband", "rdma", "low latency", "cluster networking"],
+    "sources": [
+      { "name": "NVIDIA Networking Blog", "url": "https://developer.nvidia.com/networking/blog/feed/", "weight": 0.95 },
+      { "name": "Arista Networks Blog", "url": "https://www.arista.com/en/blog?format=feed&type=rss", "weight": 0.9 },
+      { "name": "Juniper Networks Blog", "url": "https://blogs.juniper.net/feed", "weight": 0.85 }
+    ]
+  },
+
+  "container_runtime": {
+    "weight": 1.0,
+    "description": "Container Runtimes + Optimization + CRI",
+    "tags": ["containers", "docker", "containerd", "cri-o", "runtime"],
+    "sources": [
+      { "name": "Docker Blog", "url": "https://www.docker.com/blog/feed/", "weight": 0.9 },
+      { "name": "containerd Blog", "url": "https://containerd.io/blog/feed.xml", "weight": 0.85 },
+      { "name": "CRI-O Blog", "url": "https://cri-o.io/blog/index.xml", "weight": 0.8 }
+    ]
+  },
+
+  "orchestration": {
+    "weight": 1.0,
+    "description": "Orchestration + Scheduling + Autoscaling",
+    "tags": ["orchestration", "scheduling", "autoscaling", "operators", "kubernetes"],
+    "sources": [
+      { "name": "Kubernetes Blog", "url": "https://kubernetes.io/feed.xml", "weight": 1.0 },
+      { "name": "Argo Workflows Blog", "url": "https://blog.argoproj.io/feed", "weight": 0.9 },
+      { "name": "KEDA Blog", "url": "https://keda.sh/blog/index.xml", "weight": 0.85 }
+    ]
+  },
+
+  "edge_ai": {
+    "weight": 1.0,
+    "description": "Edge AI + On-device Inference",
+    "tags": ["edge ai", "on-device", "embedded", "optimization", "inference"],
+    "sources": [
+      { "name": "Edge Impulse Blog", "url": "https://www.edgeimpulse.com/blog/rss.xml", "weight": 0.9 },
+      { "name": "TinyML Blog", "url": "https://www.tinyml.org/feed/", "weight": 0.85 },
+      { "name": "NVIDIA Jetson Blog", "url": "https://developer.nvidia.com/embedded/community/blog/feed", "weight": 0.85 }
+    ]
+  },
+
+  "finops_data": {
+  "weight": 1.0,
+  "description": "FinOps + Cloud Cost Optimization for AI & Data",
+  "tags": [
+    "finops",
+    "cost optimization",
+    "cloud costs",
+    "gpu costs",
+    "billing"
+  ],
+  "sources": [
+    {
+      "name": "FinOps Foundation Blog",
+      "url": "https://www.finops.org/blog/feed/",
+      "weight": 0.95
+    },
+    {
+      "name": "CloudZero Blog",
+      "url": "https://www.cloudzero.com/blog/rss.xml",
+      "weight": 0.9
+    },
+    {
+      "name": "Kubecost Blog",
+      "url": "https://blog.kubecost.com/rss.xml",
+      "weight": 0.85
+    }
+  ]
+},
+"data_security": {
+  "weight": 1.0,
+  "description": "Data Security + Encryption + Masking",
+  "tags": [
+    "data security",
+    "encryption",
+    "masking",
+    "tokenization",
+    "access control"
+  ],
+  "sources": [
+    {
+      "name": "OWASP Blog",
+      "url": "https://owasp.org/blog/index.xml",
+      "weight": 0.9
+    },
+    {
+      "name": "Imperva Blog",
+      "url": "https://www.imperva.com/blog/feed/",
+      "weight": 0.85
+    },
+    {
+      "name": "Varonis Data Security Blog",
+      "url": "https://www.varonis.com/blog/rss",
+      "weight": 0.85
+    }
+  ]
+},
+"ai_hardware": {
+  "weight": 1.0,
+  "description": "AI Hardware + Accelerators + Chips",
+  "tags": [
+    "gpu",
+    "tpu",
+    "npu",
+    "accelerators",
+    "hardware"
+  ],
+  "sources": [
+    {
+      "name": "NVIDIA Developer Blog",
+      "url": "https://developer.nvidia.com/blog/feed/",
+      "weight": 1.0
+    },
+    {
+      "name": "Intel AI Blog",
+      "url": "https://www.intel.com/content/www/us/en/developer/articles/rss/dev-news.xml",
+      "weight": 0.9
+    },
+    {
+      "name": "AMD Developer Blog",
+      "url": "https://community.amd.com/ct5/custom/page/page-id/Blogs-RSS",
+      "weight": 0.85
+    }
+  ]
+},
+"distributed_computing": {
+  "weight": 1.0,
+  "description": "Distributed Computing + Consensus + Replication",
+  "tags": [
+    "distributed systems",
+    "consensus",
+    "replication",
+    "sharding",
+    "fault tolerance"
+  ],
+  "sources": [
+    {
+      "name": "The Morning Paper (Distributed Systems)",
+      "url": "https://blog.acolyer.org/feed/",
+      "weight": 0.95
+    },
+    {
+      "name": "Apache ZooKeeper Blog",
+      "url": "https://zookeeper.apache.org/blog/feed.xml",
+      "weight": 0.85
+    },
+    {
+      "name": "etcd Blog",
+      "url": "https://etcd.io/blog/index.xml",
+      "weight": 0.85
+    }
+  ]
+},
+"data_compression": {
+  "weight": 1.0,
+  "description": "Data Compression + Encoding + Columnar Formats",
+  "tags": [
+    "compression",
+    "encoding",
+    "columnar",
+    "parquet",
+    "orc"
+  ],
+  "sources": [
+    {
+      "name": "Apache Parquet Blog",
+      "url": "https://parquet.apache.org/feed.xml",
+      "weight": 0.9
+    },
+    {
+      "name": "Apache Arrow Blog",
+      "url": "https://arrow.apache.org/blog/feed.xml",
+      "weight": 0.9
+    },
+    {
+      "name": "Zstandard Blog",
+      "url": "https://facebook.github.io/zstd/feed.xml",
+      "weight": 0.85
+    }
+  ]
+},
+"real_time_analytics": {
+  "weight": 1.0,
+  "description": "Real-Time Analytics + OLAP + Low Latency",
+  "tags": [
+    "real-time",
+    "olap",
+    "analytics",
+    "low latency",
+    "dashboards"
+  ],
+  "sources": [
+    {
+      "name": "ClickHouse Blog",
+      "url": "https://clickhouse.com/blog/rss.xml",
+      "weight": 1.0
+    },
+    {
+      "name": "Materialize Blog",
+      "url": "https://materialize.com/feed/",
+      "weight": 0.9
+    },
+    {
+      "name": "Rockset Blog",
+      "url": "https://rockset.com/blog/rss.xml",
+      "weight": 0.85
+    }
+  ]
+}
+  }
+
+
+
+
+
+

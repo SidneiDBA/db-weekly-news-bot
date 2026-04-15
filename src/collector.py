@@ -15,9 +15,12 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import urllib.request
+import urllib.parse
+import urllib.error
 import xml.etree.ElementTree as ET
 import re
 import os
+import gzip
 from db import get_conn
 
 
@@ -72,6 +75,10 @@ def _try_parse_xml(feed_bytes):
         return ET.fromstring(feed_bytes)
     except ET.ParseError:
         text = feed_bytes.decode("utf-8", errors="ignore")
+        # Some providers prepend junk bytes before the XML declaration.
+        first_xml = text.find("<")
+        if first_xml > 0:
+            text = text[first_xml:]
         text = text.replace("&nbsp;", " ")
         text = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F]", "", text)
         text = re.sub(
@@ -80,6 +87,56 @@ def _try_parse_xml(feed_bytes):
             text,
         )
         return ET.fromstring(text)
+
+
+def _candidate_feed_urls(feed_url):
+    candidates = []
+    parsed = urllib.parse.urlparse(feed_url)
+    path = parsed.path.rstrip("/")
+
+    for suffix in ("/feed", "/rss", "/rss.xml", "/feed.xml", "/atom.xml", "/index.xml"):
+        if path.endswith(suffix):
+            base = path[: -len(suffix)] or "/"
+            alternatives = ["/feed", "/feed.xml", "/rss", "/rss.xml", "/atom.xml", "/index.xml"]
+            for alt in alternatives:
+                new_path = (base.rstrip("/") + alt) if base != "/" else alt
+                if new_path != parsed.path:
+                    candidates.append(parsed._replace(path=new_path, query="").geturl())
+
+    return list(dict.fromkeys(candidates))
+
+
+def _extract_alternate_feed_url(html_text, base_url):
+    pattern = re.compile(
+        r"<link[^>]+rel=[\"'][^\"']*alternate[^\"']*[\"'][^>]*>",
+        flags=re.IGNORECASE,
+    )
+    for match in pattern.findall(html_text):
+        link_type = re.search(r"type=[\"']([^\"']+)[\"']", match, flags=re.IGNORECASE)
+        href = re.search(r"href=[\"']([^\"']+)[\"']", match, flags=re.IGNORECASE)
+        if not href:
+            continue
+        feed_type = (link_type.group(1).lower() if link_type else "")
+        if "rss" in feed_type or "atom" in feed_type or feed_type.endswith("xml"):
+            return urllib.parse.urljoin(base_url, href.group(1))
+    return None
+
+
+def _fetch_url_bytes(url, timeout=10):
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 (compatible; DBWeeklyBot/1.0)",
+            "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, text/html;q=0.8, */*;q=0.5",
+            "Accept-Encoding": "gzip",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        payload = response.read()
+        content_encoding = response.headers.get("Content-Encoding", "").lower()
+        if content_encoding == "gzip" or payload[:2] == b"\x1f\x8b":
+            payload = gzip.decompress(payload)
+        return payload
 
 def _check_feed_health(feed_url, timeout=5):
     """Quick health check for RSS feed URL.
@@ -111,23 +168,41 @@ def collect(feed_url, source_name):
         if not _check_feed_health(feed_url, timeout=health_check_timeout):
             print(f"Skipping {source_name} - feed did not respond within {health_check_timeout}s")
             return
-    try:
-        # Add User-Agent header (many servers block requests without it)
-        req = urllib.request.Request(
-            feed_url,
-            headers={'User-Agent': 'Mozilla/5.0 (compatible; DBWeeklyBot/1.0)'}
-        )
-        with urllib.request.urlopen(req, timeout=10) as response:
-            feed_xml = response.read()
-    except Exception as e:
-        print(f"Error fetching {source_name} ({feed_url}): {e}")
+    tried_urls = [feed_url]
+    feed_xml = None
+    fetch_errors = []
+
+    for candidate_url in [feed_url] + _candidate_feed_urls(feed_url):
+        try:
+            feed_xml = _fetch_url_bytes(candidate_url, timeout=10)
+            if candidate_url != feed_url:
+                print(f"Info: {source_name} feed fallback URL used: {candidate_url}")
+            break
+        except Exception as e:
+            fetch_errors.append((candidate_url, e))
+            tried_urls.append(candidate_url)
+
+    if feed_xml is None:
+        first_url, first_error = fetch_errors[0] if fetch_errors else (feed_url, "unknown error")
+        print(f"Error fetching {source_name} ({first_url}): {first_error}")
         return
 
     try:
         root = _try_parse_xml(feed_xml)
     except ET.ParseError as e:
-        print(f"Error parsing RSS from {source_name}: {e}")
-        return
+        html_text = feed_xml.decode("utf-8", errors="ignore")
+        alt_url = _extract_alternate_feed_url(html_text, feed_url)
+        if alt_url and alt_url not in tried_urls:
+            try:
+                alt_xml = _fetch_url_bytes(alt_url, timeout=10)
+                root = _try_parse_xml(alt_xml)
+                print(f"Info: {source_name} discovered alternate feed URL: {alt_url}")
+            except Exception:
+                print(f"Error parsing RSS from {source_name}: {e}")
+                return
+        else:
+            print(f"Error parsing RSS from {source_name}: {e}")
+            return
 
     # Handle both RSS 2.0 and Atom namespaces
     items = root.findall(".//item")  # RSS 2.0
@@ -162,6 +237,10 @@ def collect(feed_url, source_name):
         link = link_elem.text if link_elem is not None else ""
         published = pub_elem.text if pub_elem is not None else ""
         content = desc_elem.text if desc_elem is not None else ""
+
+        # Resolve relative URLs to absolute using the feed's base URL
+        if link and not link.startswith("http"):
+            link = urllib.parse.urljoin(feed_url, link)
 
         original_link = link
         link = _repair_link(link, content)

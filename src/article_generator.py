@@ -105,31 +105,59 @@ def generate_weekly(report_mode="weekly", allowed_sources=None):
     except Exception:
         min_score_threshold = 0.6
 
-    if allowed_sources:
-        placeholders = ",".join(["%s" for _ in allowed_sources])
-        query = f"""
-            SELECT r.title, r.url
-            FROM articles_raw r
-            JOIN articles_scored s ON s.raw_id = r.id
-            WHERE s.impact_score >= %s
-              AND s.is_duplicate = FALSE
-              AND r.source IN ({placeholders})
-            ORDER BY s.impact_score DESC
-            LIMIT 7
-        """
-        cur.execute(query, (min_score_threshold, *allowed_sources))
-    else:
-        cur.execute("""
-            SELECT r.title, r.url
-            FROM articles_raw r
-            JOIN articles_scored s ON s.raw_id = r.id
-            WHERE s.impact_score >= %s
-              AND s.is_duplicate = FALSE
-            ORDER BY s.impact_score DESC
-            LIMIT 7
-        """, (min_score_threshold,))
+    def _fetch_articles(days_back):
+        if allowed_sources:
+            placeholders = ",".join(["%s" for _ in allowed_sources])
+            query = f"""
+                SELECT r.title, r.url
+                FROM articles_raw r
+                JOIN articles_scored s ON s.raw_id = r.id
+                WHERE s.impact_score >= %s
+                  AND s.is_duplicate = FALSE
+                  AND r.source IN ({placeholders})
+                  AND r.ingested_at >= NOW() - INTERVAL '{days_back} days'
+                ORDER BY s.impact_score DESC
+                LIMIT 7
+            """
+            cur.execute(query, (min_score_threshold, *allowed_sources))
+        else:
+            cur.execute(f"""
+                SELECT r.title, r.url
+                FROM articles_raw r
+                JOIN articles_scored s ON s.raw_id = r.id
+                WHERE s.impact_score >= %s
+                  AND s.is_duplicate = FALSE
+                  AND r.ingested_at >= NOW() - INTERVAL '{days_back} days'
+                ORDER BY s.impact_score DESC
+                LIMIT 7
+            """, (min_score_threshold,))
+        return cur.fetchall()
 
-    articles = cur.fetchall()
+    # Try progressively wider windows until we have at least 3 articles
+    articles = []
+    for days in (7, 14, 30, 90, 365):
+        articles = _fetch_articles(days)
+        if len(articles) >= 3:
+            break
+    if not articles:
+        # Final fallback: all time
+        if allowed_sources:
+            placeholders = ",".join(["%s" for _ in allowed_sources])
+            cur.execute(f"""
+                SELECT r.title, r.url FROM articles_raw r
+                JOIN articles_scored s ON s.raw_id = r.id
+                WHERE s.impact_score >= %s AND s.is_duplicate = FALSE
+                  AND r.source IN ({placeholders})
+                ORDER BY s.impact_score DESC LIMIT 7
+            """, (min_score_threshold, *allowed_sources))
+        else:
+            cur.execute("""
+                SELECT r.title, r.url FROM articles_raw r
+                JOIN articles_scored s ON s.raw_id = r.id
+                WHERE s.impact_score >= %s AND s.is_duplicate = FALSE
+                ORDER BY s.impact_score DESC LIMIT 7
+            """, (min_score_threshold,))
+        articles = cur.fetchall()
     articles_md = "\n".join([f"- {t} ({u})" for t, u in articles])
     source_urls = [u for _, u in articles if u]
 

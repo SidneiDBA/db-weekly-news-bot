@@ -23,8 +23,14 @@ def init_db(conn):
             title TEXT,
             url TEXT UNIQUE,
             published_at TEXT,
-            content TEXT
+            content TEXT,
+            ingested_at TIMESTAMPTZ DEFAULT NOW()
         )
+    """)
+    # Add ingested_at to existing tables that were created before this column existed
+    cur.execute("""
+        ALTER TABLE articles_raw
+        ADD COLUMN IF NOT EXISTS ingested_at TIMESTAMPTZ DEFAULT NOW()
     """)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS articles_scored (
