@@ -129,6 +129,132 @@ def _replace_sources_section(md_text, source_urls):
 
     return md_text.rstrip() + f"\n\n## 📎 Sources\n{sources_block}\n"
 
+
+def _extract_section(md_text, headings):
+    pattern = re.compile(r"^##+\s+(.+)$", re.MULTILINE)
+    matches = list(pattern.finditer(md_text or ""))
+    lowered_targets = tuple(heading.lower() for heading in headings)
+
+    for index, match in enumerate(matches):
+        heading = match.group(1).strip().lower()
+        if any(target in heading for target in lowered_targets):
+            start = match.end()
+            end = matches[index + 1].start() if index + 1 < len(matches) else len(md_text)
+            return md_text[start:end].strip()
+    return ""
+
+
+def _extract_list_items(section_text):
+    items = []
+    for line in (section_text or "").splitlines():
+        cleaned = re.sub(r"^\s*(?:[-*]|\d+[.)])\s+", "", line).strip()
+        if cleaned:
+            items.append(cleaned)
+    return items
+
+
+def _paragraphize(section_text):
+    lines = [line.strip() for line in (section_text or "").splitlines() if line.strip()]
+    if not lines:
+        return ""
+    return " ".join(lines)
+
+
+def _build_sources_block(source_urls):
+    normalized_sources = []
+    seen = set()
+    for url in source_urls:
+        normalized = _canonicalize_url(url)
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            normalized_sources.append(normalized)
+    return "\n".join([f"- {url}" for url in normalized_sources])
+
+
+def _format_weekly_template(md_text, articles, source_urls):
+    article_lines = []
+    for index, (title, url) in enumerate(articles, start=1):
+        article_lines.append(f"### {index}. {title}\n{_canonicalize_url(url)}")
+
+    trends = _extract_list_items(_extract_section(md_text, ["trends observed", "trends"]))
+    if not trends:
+        trends = [title for title, _ in articles]
+
+    why_this_matters = _extract_list_items(_extract_section(md_text, ["why this matters", "why this matter"]))
+    if not why_this_matters:
+        why_this_matters = [
+            "Tracks the database and data-platform changes most likely to affect production operations.",
+            "Helps prioritize follow-up investigation on tools, compatibility, and operational risk.",
+            "Keeps DBA teams aligned on practical developments across the current article set.",
+        ]
+
+    sources_block = _build_sources_block(source_urls)
+
+    return (
+        "\n\n".join(article_lines)
+        + "\n\n## Trends Observed:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(trends, start=1))
+        + "\n\n## Why This Matters:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(why_this_matters, start=1))
+        + "\n\n## 📎 Sources\n"
+        + sources_block
+        + "\n"
+    )
+
+
+def _format_ai_radar_template(md_text, articles, source_urls):
+    intro = _paragraphize(_extract_section(md_text, ["high-impact signals", "summary"]))
+    if not intro:
+        intro = (
+            "This compilation highlights the current state of AI infrastructures for databases, "
+            "embedding technology, RAG, LLM-SQL combinations and their implications on storage engines."
+        )
+
+    architecture = _extract_list_items(_extract_section(md_text, ["architecture implications"]))
+    cost = _extract_list_items(_extract_section(md_text, ["cost & scalability notes", "cost", "scalability"]))
+    production = _extract_list_items(_extract_section(md_text, ["production readiness", "risks", "blockers"]))
+    actions = _extract_list_items(_extract_section(md_text, ["recommended actions", "actions"]))
+
+    fallback_items = [
+        f"{title} ({_canonicalize_url(url)})" for title, url in articles
+    ]
+
+    if not architecture:
+        architecture = fallback_items
+    if not cost:
+        cost = fallback_items
+    if not production:
+        production = fallback_items
+    if not actions:
+        actions = [
+            "Review the linked articles for concrete architectural changes before adopting new AI-data patterns.",
+            "Prioritize experiments that improve retrieval quality, indexing strategy, or production readiness.",
+            "Track cost and operational impact for any LLM, vector, or RAG feature introduced into the platform.",
+        ]
+
+    sources_block = _build_sources_block(source_urls)
+
+    return (
+        intro
+        + "\n\n## 🧭 Architecture Implications:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(architecture, start=1))
+        + "\n\n## 💸 Cost & Scalability Notes:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(cost, start=1))
+        + "\n\n## 🏭 Production Readiness:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(production, start=1))
+        + "\n\n## 🛠️ Recommended Actions:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(actions, start=1))
+        + "\n\n## 📎 Sources\n"
+        + sources_block
+        + "\n"
+    )
+
+
+def _normalize_report_template(md_text, report_mode, articles, source_urls):
+    if report_mode == "ai_radar":
+        return _format_ai_radar_template(md_text, articles, source_urls)
+    return _format_weekly_template(md_text, articles, source_urls)
+
 def generate_weekly(report_mode="weekly", allowed_sources=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -224,6 +350,7 @@ def generate_weekly(report_mode="weekly", allowed_sources=None):
 
     md = _normalize_url_prefixes(md, source_urls)
     md = _remove_unknown_urls(md, source_urls)
+    md = _normalize_report_template(md, report_mode, articles, source_urls)
     md = _replace_sources_section(md, source_urls)
 
     # Create output directory if it doesn't exist
