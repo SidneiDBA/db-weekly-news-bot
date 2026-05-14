@@ -9,7 +9,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from url_health import _check_url
+from url_health import _check_url, _extract_urls
 
 
 def test_url_health_treats_403_as_reachable():
@@ -42,3 +42,9 @@ def test_url_health_keeps_404_as_broken():
 
     assert is_ok is False
     assert status == 404
+
+
+def test_extract_urls_strips_trailing_punctuation():
+    urls = _extract_urls("See https://example.com/page. Then https://example.com/ok,")
+
+    assert urls == ["https://example.com/page", "https://example.com/ok"]

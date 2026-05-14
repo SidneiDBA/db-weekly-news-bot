@@ -24,6 +24,7 @@ def _extract_urls(markdown_text):
     deduped = []
     seen = set()
     for url in urls:
+        url = url.rstrip(".,;:!?")
         if url not in seen:
             seen.add(url)
             deduped.append(url)

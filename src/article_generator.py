@@ -22,6 +22,14 @@ import json
 import re
 
 
+def _split_trailing_url_punctuation(url):
+    suffix = ""
+    while url and url[-1] in ".,;:!?":
+        suffix = url[-1] + suffix
+        url = url[:-1]
+    return url, suffix
+
+
 def _canonicalize_url(url):
     if not url:
         return url
@@ -48,20 +56,50 @@ def _normalize_url_prefixes(md_text, source_urls):
 
     def replace_token(match):
         token = match.group(0)
-        if token in seen:
+        normalized_token, suffix = _split_trailing_url_punctuation(token)
+        if normalized_token in seen:
             return token
-        seen.add(token)
+        seen.add(normalized_token)
 
-        canonical_token = _canonicalize_url(token)
+        canonical_token = _canonicalize_url(normalized_token)
         if canonical_token in normalized_sources:
-            return canonical_token
+            return canonical_token + suffix
 
-        matches = [full for full in normalized_sources if full.startswith(token)]
+        matches = [full for full in normalized_sources if full.startswith(normalized_token)]
         if len(matches) == 1:
-            return matches[0]
-        return canonical_token
+            return matches[0] + suffix
+        return canonical_token + suffix
 
     return url_token_pattern.sub(replace_token, md_text)
+
+
+def _remove_unknown_urls(md_text, source_urls):
+    """Strip model-invented URLs so briefs only reference collected articles."""
+    if not md_text or not source_urls:
+        return md_text
+
+    normalized_sources = [_canonicalize_url(url) for url in source_urls if url]
+    url_token_pattern = re.compile(r"https?://[^\s)]+")
+
+    def replace_token(match):
+        token = match.group(0)
+        normalized_token, suffix = _split_trailing_url_punctuation(token)
+        canonical_token = _canonicalize_url(normalized_token)
+
+        if canonical_token in normalized_sources:
+            return canonical_token + suffix
+
+        matches = [full for full in normalized_sources if full.startswith(normalized_token)]
+        if len(matches) == 1:
+            return matches[0] + suffix
+
+        return suffix
+
+    sanitized = url_token_pattern.sub(replace_token, md_text)
+    sanitized = re.sub(r"\(\s*\)", "", sanitized)
+    sanitized = re.sub(r"\bat\s+([.,;:!?])", r"\1", sanitized)
+    sanitized = re.sub(r"\s+([.,;:!?])", r"\1", sanitized)
+    return sanitized
 
 
 def _replace_sources_section(md_text, source_urls):
@@ -185,6 +223,7 @@ def generate_weekly(report_mode="weekly", allowed_sources=None):
         raise ValueError("LLM returned JSON instead of markdown")
 
     md = _normalize_url_prefixes(md, source_urls)
+    md = _remove_unknown_urls(md, source_urls)
     md = _replace_sources_section(md, source_urls)
 
     # Create output directory if it doesn't exist

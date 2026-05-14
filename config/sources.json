@@ -215,11 +215,6 @@
           "weight": 0.8
         },
         {
-          "name": "MLOps Community Blog",
-          "url": "https://mlops.community/feed/",
-          "weight": 0.75
-        },
-        {
           "name": "ArXiv ML",
           "url": "https://export.arxiv.org/rss/cs.LG",
           "weight": 0.95
@@ -560,11 +555,6 @@
           "name": "OWASP Blog",
           "url": "https://owasp.org/feed.xml",
           "weight": 0.9
-        },
-        {
-          "name": "Imperva Blog",
-          "url": "https://www.imperva.com/blog/feed/",
-          "weight": 0.85
         }
       ]
     },
@@ -659,13 +649,7 @@
         "ci/cd",
         "serving"
       ],
-      "sources": [
-        {
-          "name": "MLOps Community",
-          "url": "https://mlops.community/feed/",
-          "weight": 1.0
-        }
-      ]
+      "sources": []
     },
     "networking_for_ai": {
       "weight": 1.0,
