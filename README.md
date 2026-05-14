@@ -175,6 +175,8 @@ python3 src/main.py
 | `USE_OLLAMA` | `false` | Set to `true` to use real Ollama LLM; `false` uses mock responses |
 | `REPORT_MODE` | `weekly` | `weekly` generates `weekly_brief.md`; `ai_radar` generates `ai_radar_brief.md` |
 | `RSS_HEALTH_CHECK_TIMEOUT` | `0` | Seconds to wait for RSS feed response; `0` disables health check (waits indefinitely); set to `3-5` to skip slow/dead feeds |
+| `OLLAMA_TIMEOUT_SECONDS` | `180` | Per-request timeout for `ollama run`; lower values fail faster on problematic prompts |
+| `MAX_CLASSIFICATIONS_PER_RUN` | `0` | Limit classification rows per run (`0` means unlimited); useful to process backlog in safe batches |
 | `PGHOST` | (unset) | PostgreSQL host; unset uses local socket/peer auth |
 | `PGPORT` | (unset) | PostgreSQL port; set when using TCP host |
 | `PGUSER` | current OS user | PostgreSQL user |
@@ -340,6 +342,66 @@ This is **normal** if `USE_OLLAMA=true` but Ollama isn't installed. The script f
 - **Subsequent runs:** Should complete in seconds once loaded
 - **Check model status:** `ollama list`
 
+### Ollama request timeout / very slow responses
+If single requests are taking too long (sometimes 20-50s+ for long prompts), set a lower per-request timeout:
+```bash
+USE_OLLAMA=true OLLAMA_TIMEOUT_SECONDS=120 python3 src/main.py
+```
+
+This project retries and can fall back when a request fails, so reducing timeout helps avoid apparently stuck runs.
+
+### Run never ends with large pending backlog
+When `articles_raw` has many unscored rows, one run can take a very long time.
+
+Use bounded batches:
+```bash
+USE_OLLAMA=true OLLAMA_TIMEOUT_SECONDS=120 MAX_CLASSIFICATIONS_PER_RUN=250 python3 src/main.py
+```
+
+Run repeatedly (or in a loop) until pending reaches zero.
+
+Check backlog quickly:
+```bash
+psql -qtAX -d "${PGDATABASE:-db_weekly_new}" -c "SELECT \
+   (SELECT count(*) FROM articles_scored) AS scored, \
+   (SELECT count(*) FROM articles_raw WHERE id NOT IN (SELECT raw_id FROM articles_scored)) AS pending;"
+```
+
+### "Ollama response did not contain valid JSON payload"
+This can happen when the model returns valid JSON plus explanatory text.
+
+- The code now attempts to extract the first valid JSON object automatically.
+- If extraction fails, the run logs the warning and moves to retry/fallback logic.
+- Occasional warnings are expected; frequent warnings usually indicate prompt/model drift.
+
+### Ollama server cold starts and latency spikes
+Keep the model loaded longer to avoid repeated load latency:
+```bash
+OLLAMA_KEEP_ALIVE=24h ollama serve
+```
+
+Verify activity:
+```bash
+ollama ps
+```
+
+### RSS feed 404 or unavailable source
+Errors like `HTTP Error 404` from individual feeds are non-fatal; the collector skips that source and continues.
+
+If a source is permanently gone, remove or replace its URL in `config/sources.json`.
+
+### Why exit code 143 appears
+Exit code `143` means the process received SIGTERM (commonly from `pkill` during restart). This is expected when intentionally restarting long runs.
+
+### One-shot operational recipe (stable mode)
+```bash
+# 1) keep ollama warm
+OLLAMA_KEEP_ALIVE=24h ollama serve
+
+# 2) run classification in controlled batches
+USE_OLLAMA=true OLLAMA_TIMEOUT_SECONDS=120 MAX_CLASSIFICATIONS_PER_RUN=250 python3 src/main.py
+```
+
 ### Pipeline hangs on slow RSS feeds
 **Solution:** Enable RSS pre-check and skip slow/unavailable feeds:
 ```bash
@@ -395,8 +457,12 @@ USE_OLLAMA=true python3 src/main.py
    - Replaced hardcoded paths like `"prompts/article_weekly.txt"` with absolute paths
    - All config, prompt, and output paths computed dynamically
 
-4. **LLM Timeout** – Increased timeout from 60s to 300s for first model load
-   - Accommodates slower machines and initial model loading
+4. **LLM Timeout** – Timeout is now configurable via `OLLAMA_TIMEOUT_SECONDS` (default 180s)
+   - Allows faster failure/retry cycles in long unattended runs
+
+5. **Classifier Batching** – Added `MAX_CLASSIFICATIONS_PER_RUN` and periodic commits
+   - Prevents giant backlogs from feeling like infinite runs
+   - Improves observability with progress logs during long processing
 
 ### Configuration Improvements
 - Added `USE_OLLAMA` environment variable for easy LLM toggle

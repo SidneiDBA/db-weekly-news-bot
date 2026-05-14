@@ -41,6 +41,9 @@ except json.JSONDecodeError as e:
     config = {}
 
 mode = os.environ.get("REPORT_MODE", "weekly").strip().lower()
+output_file = "ai_radar_brief.md" if mode == "ai_radar" else "weekly_brief.md"
+print(f"Report mode: {mode} -> output/{output_file}")
+
 domains_to_process = None
 if mode == "ai_radar":
     domains_to_process = ["ai_data"]
@@ -74,7 +77,6 @@ classify(allowed_sources=selected_sources if selected_sources else None, mode=mo
 dedupe()
 generate_weekly(report_mode=mode, allowed_sources=selected_sources if selected_sources else None)
 
-output_file = "ai_radar_brief.md" if mode == "ai_radar" else "weekly_brief.md"
 health_ok = run_url_health_check(os.path.join(ROOT, "output", output_file))
 if not health_ok:
     print("Run failed due to broken URLs in generated output")

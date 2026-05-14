@@ -20,6 +20,34 @@ import time
 import os
 import re
 
+
+def _extract_json_payload(text):
+    """Extract the first valid JSON payload from model output."""
+    if not text:
+        return None
+
+    content = text.strip()
+    if not content:
+        return None
+
+    try:
+        parsed = json.loads(content)
+        return json.dumps(parsed)
+    except json.JSONDecodeError:
+        pass
+
+    decoder = json.JSONDecoder()
+    for idx, ch in enumerate(content):
+        if ch not in "[{":
+            continue
+        try:
+            parsed, _ = decoder.raw_decode(content[idx:])
+            return json.dumps(parsed)
+        except json.JSONDecodeError:
+            continue
+
+    return None
+
 def _mock_json_response():
     return json.dumps({
         "db_engine": "PostgreSQL",
@@ -73,6 +101,7 @@ def call_llm(prompt, use_ollama=None, response_format="json"):
         return _mock_json_response()
     
     # Try to use ollama if enabled
+    timeout_seconds = int(os.environ.get("OLLAMA_TIMEOUT_SECONDS", "180"))
     for attempt in range(2):
         try:
             result = subprocess.run(
@@ -80,10 +109,16 @@ def call_llm(prompt, use_ollama=None, response_format="json"):
                 input=prompt,
                 text=True,
                 capture_output=True,
-                timeout=300
+                timeout=timeout_seconds
             )
             if result.returncode == 0:
-                return result.stdout
+                if response_format == "json":
+                    payload = _extract_json_payload(result.stdout)
+                    if payload is not None:
+                        return payload
+                    print("Ollama response did not contain valid JSON payload")
+                else:
+                    return result.stdout
             print(f"Ollama error: {result.stderr}")
         except Exception as e:
             # catch any unexpected issue and fall back after a pause

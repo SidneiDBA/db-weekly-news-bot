@@ -143,7 +143,18 @@ def classify(allowed_sources=None, mode="weekly"):
             WHERE id NOT IN (SELECT raw_id FROM articles_scored)
         """)
 
-    for raw_id, source_name, title, content in cur.fetchall():
+    rows = cur.fetchall()
+    max_per_run = int(os.environ.get("MAX_CLASSIFICATIONS_PER_RUN", "0") or "0")
+    if max_per_run > 0:
+        rows = rows[:max_per_run]
+
+    total_rows = len(rows)
+    processed = 0
+    attempts = 0
+    json_parse_failures = 0
+
+    for raw_id, source_name, title, content in rows:
+        attempts += 1
         prompt = open(prompt_path).read()
         prompt = prompt.replace("{{content}}", normalize(content))
 
@@ -152,6 +163,29 @@ def classify(allowed_sources=None, mode="weekly"):
         try:
             llm_raw = json.loads(response)
         except Exception:
+            json_parse_failures += 1
+            if attempts % 25 == 0:
+                failure_pct = (json_parse_failures / attempts) * 100
+                print(
+                    f"classifier progress: {processed}/{total_rows} "
+                    f"(attempts={attempts}, json_parse_failures={json_parse_failures}, "
+                    f"failure_rate={failure_pct:.1f}%)"
+                )
+            continue
+
+        # Some model responses are JSON arrays; prefer the first object payload.
+        if isinstance(llm_raw, list):
+            llm_raw = next((item for item in llm_raw if isinstance(item, dict)), None)
+
+        if not isinstance(llm_raw, dict):
+            json_parse_failures += 1
+            if attempts % 25 == 0:
+                failure_pct = (json_parse_failures / attempts) * 100
+                print(
+                    f"classifier progress: {processed}/{total_rows} "
+                    f"(attempts={attempts}, json_parse_failures={json_parse_failures}, "
+                    f"failure_rate={failure_pct:.1f}%)"
+                )
             continue
 
         domain_cfg, source_cfg = source_lookup.get(
@@ -188,5 +222,22 @@ def classify(allowed_sources=None, mode="weekly"):
             impact_score
         ))
 
+        processed += 1
+        if attempts % 25 == 0:
+            conn.commit()
+            failure_pct = (json_parse_failures / attempts) * 100 if attempts else 0.0
+            print(
+                f"classifier progress: {processed}/{total_rows} "
+                f"(attempts={attempts}, json_parse_failures={json_parse_failures}, "
+                f"failure_rate={failure_pct:.1f}%)"
+            )
+
     conn.commit()
+    if total_rows:
+        failure_pct = (json_parse_failures / attempts) * 100 if attempts else 0.0
+        print(
+            f"classifier completed: {processed}/{total_rows} "
+            f"(attempts={attempts}, json_parse_failures={json_parse_failures}, "
+            f"failure_rate={failure_pct:.1f}%)"
+        )
     conn.close()
