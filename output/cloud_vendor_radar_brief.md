@@ -5,25 +5,35 @@ This briefing tracks cloud-vendor database services, storage platforms, and AI-a
 2. Gemini in Google Sheets just achieved state-of-the-art performance. highlights a cloud-vendor database or storage capability that can affect platform selection, integration patterns, or managed service design (https://blog.google/products-and-platforms/products/workspace/gemini-google-sheets-state-of-the-art/).
 
 ## 🤖 AI Solutions:
-1. AI Gateway: A Governance Layer for Agentic AI (Databricks)
-2. Gemini API with Flex and Priority Inference (Google)
+1. Introducing V-RAG: revolutionizing AI-powered video production with Retrieval Augmented Generation surfaces an AI-related cloud capability that may influence retrieval, model serving, or database-adjacent AI architecture (https://aws.amazon.com/blogs/machine-learning/introducing-v-rag-revolutionizing-ai-powered-video-production-with-retrieval-augmented-generation/).
+2. AI Gateway: A Governance Layer for Agentic AI surfaces an AI-related cloud capability that may influence retrieval, model serving, or database-adjacent AI architecture (https://www.databricks.com/blog/ai-gateway-governance-layer-agentic-ai).
+3. New ways to balance cost and reliability in the Gemini API surfaces an AI-related cloud capability that may influence retrieval, model serving, or database-adjacent AI architecture (https://blog.google/innovation-and-ai/technology/developers-tools/introducing-flex-and-priority-inference/).
+4. How BASF’s Agriculture Solutions drives traceability and climate action by tokenizing cotton value chains using Amazon Managed Blockchain surfaces an AI-related cloud capability that may influence retrieval, model serving, or database-adjacent AI architecture (https://aws.amazon.com/blogs/architecture/how-basfs-agriculture-solutions-drives-traceability-and-climate-action-by-tokenizing-cotton-value-chains-using-amazon-managed-blockchain/).
 
-## 🧭 Architecture Implications:
-1. Vendor-specific database + AI integration will impact application design, data pipelines and governance.
-2. Cloud vendor solutions may require adjustments to match workload requirements across hyperscalers and cloud data vendors.
+## 🧩 Where This Fits:
+1. Introducing V-RAG: revolutionizing AI-powered video production with Retrieval Augmented Generation fits teams evaluating managed database adoption, migration, or multi-vendor service tradeoffs (https://aws.amazon.com/blogs/machine-learning/introducing-v-rag-revolutionizing-ai-powered-video-production-with-retrieval-augmented-generation/).
+2. AI Gateway: A Governance Layer for Agentic AI fits storage-heavy environments with lakehouse, warehouse, or object-store coordination needs (https://www.databricks.com/blog/ai-gateway-governance-layer-agentic-ai).
+3. New ways to balance cost and reliability in the Gemini API fits data teams adopting vendor AI services that must coexist with governed production data (https://blog.google/innovation-and-ai/technology/developers-tools/introducing-flex-and-priority-inference/).
 
-## 💸 Cost & Scalability Notes:
-1. Optimizing costs can be tricky as different vendors have unique pricing structures for storage, compute, and AI services.
-2. Vendor database + AI integration might limit flexibility in adapting to changing data volumes or workload demands.
+## ⚠️ Operational Risks:
+1. Introducing V-RAG: revolutionizing AI-powered video production with Retrieval Augmented Generation should be reviewed for vendor lock-in, migration friction, and service-limit surprises (https://aws.amazon.com/blogs/machine-learning/introducing-v-rag-revolutionizing-ai-powered-video-production-with-retrieval-augmented-generation/).
+2. AI Gateway: A Governance Layer for Agentic AI should be reviewed for data layout mistakes, recovery gaps, and access-pattern cost drift (https://www.databricks.com/blog/ai-gateway-governance-layer-agentic-ai).
+3. New ways to balance cost and reliability in the Gemini API should be reviewed for data exposure, model-governance gaps, and integration risk (https://blog.google/innovation-and-ai/technology/developers-tools/introducing-flex-and-priority-inference/).
 
-## 🏭 Production Readiness:
-1. Some solutions are still in beta mode or pilot stage (e.g., Amazon Managed Blockchain).
-2. Migrating from local or on-premise systems could lead to unexpected challenges, such as vendor lock-in and data portability risks.
+## 🧪 What To Test This Week:
+1. Lab this week: test service limits, failover expectations, and migration steps before adoption. Start with Introducing V-RAG: revolutionizing AI-powered video production with Retrieval Augmented Generation (https://aws.amazon.com/blogs/machine-learning/introducing-v-rag-revolutionizing-ai-powered-video-production-with-retrieval-augmented-generation/).
+2. Lab this week: test data layout, lifecycle rules, and recovery expectations on realistic workloads. Start with AI Gateway: A Governance Layer for Agentic AI (https://www.databricks.com/blog/ai-gateway-governance-layer-agentic-ai).
+3. Lab this week: test model access patterns, governance controls, and integration behavior with production-like data. Start with New ways to balance cost and reliability in the Gemini API (https://blog.google/innovation-and-ai/technology/developers-tools/introducing-flex-and-priority-inference/).
 
-## 🛠️ Recommended Actions:
-1. Assess current cloud services usage and evaluate options based on costs, scalability, and production needs.
-2. Prioritize practical use cases that can benefit from the latest cloud AI solutions while limiting porting risks.
-3. Stay up to date with vendor updates and roadmaps to ensure optimal platform selection.
+## 📚 Skills To Learn Next:
+1. Next skill to build: managed database SLAs, limits, and migration patterns. Start from Introducing V-RAG: revolutionizing AI-powered video production with Retrieval Augmented Generation (https://aws.amazon.com/blogs/machine-learning/introducing-v-rag-revolutionizing-ai-powered-video-production-with-retrieval-augmented-generation/).
+2. Next skill to build: object storage, table formats, and workload-aware data layout. Start from AI Gateway: A Governance Layer for Agentic AI (https://www.databricks.com/blog/ai-gateway-governance-layer-agentic-ai).
+3. Next skill to build: model governance, serving interfaces, and secure data integration. Start from New ways to balance cost and reliability in the Gemini API (https://blog.google/innovation-and-ai/technology/developers-tools/introducing-flex-and-priority-inference/).
+
+## 🚦 Production Signal:
+1. Watch closely: migration fit and service limits should be validated against current operational standards. Reference item: Introducing V-RAG: revolutionizing AI-powered video production with Retrieval Augmented Generation (https://aws.amazon.com/blogs/machine-learning/introducing-v-rag-revolutionizing-ai-powered-video-production-with-retrieval-augmented-generation/).
+2. Experimental: adoption depends on data layout, governance, and recovery planning. Reference item: AI Gateway: A Governance Layer for Agentic AI (https://www.databricks.com/blog/ai-gateway-governance-layer-agentic-ai).
+3. Watch closely: model operations and data access controls should be tested before production rollout. Reference item: New ways to balance cost and reliability in the Gemini API (https://blog.google/innovation-and-ai/technology/developers-tools/introducing-flex-and-priority-inference/).
 
 ## 📎 Sources
 - https://aws.amazon.com/blogs/machine-learning/introducing-v-rag-revolutionizing-ai-powered-video-production-with-retrieval-augmented-generation/

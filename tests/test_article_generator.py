@@ -38,9 +38,24 @@ def test_normalize_weekly_template_matches_reference_shape():
 - Trend one
 - Trend two
 
-## 🎯 Why This Matters
+## 🎯 Why A DBA Should Care
 - Reason one
 - Reason two
+
+## 🧩 Where This Fits
+- Fit one
+
+## ⚠️ Operational Risks
+- Risk one
+
+## 🧪 What To Test This Week
+- Test one
+
+## 📚 Skills To Learn Next
+- Skill one
+
+## 🚦 Production Signal
+- Signal one
 """
 
     normalized = _normalize_report_template(
@@ -52,7 +67,12 @@ def test_normalize_weekly_template_matches_reference_shape():
 
     assert "### 1. Article One" in normalized
     assert "## Trends Observed:" in normalized
-    assert "## Why This Matters:" in normalized
+    assert "## Why A DBA Should Care:" in normalized
+    assert "## Where This Fits:" in normalized
+    assert "## Operational Risks:" in normalized
+    assert "## What To Test This Week:" in normalized
+    assert "## Skills To Learn Next:" in normalized
+    assert "## Production Signal:" in normalized
     assert "## 📎 Sources" in normalized
 
 
@@ -66,11 +86,20 @@ AI systems are reshaping retrieval design.
 ## 💸 Cost & Scalability Notes
 - Cost item
 
-## 🏭 Production Readiness
-- Production item
+## 🎯 Why A DBA Should Care
+- DBA item
 
-## 🛠️ Recommended Actions
-- Action item
+## ⚠️ Operational Risks
+- Risk item
+
+## 🧪 What To Test This Week
+- Test item
+
+## 📚 Skills To Learn Next
+- Skill item
+
+## 🚦 Production Signal
+- Signal item
 """
 
     normalized = _normalize_report_template(
@@ -83,8 +112,11 @@ AI systems are reshaping retrieval design.
     assert normalized.startswith("AI systems are reshaping retrieval design.")
     assert "## 🧭 Architecture Implications:" in normalized
     assert "## 💸 Cost & Scalability Notes:" in normalized
-    assert "## 🏭 Production Readiness:" in normalized
-    assert "## 🛠️ Recommended Actions:" in normalized
+    assert "## 🎯 Why A DBA Should Care:" in normalized
+    assert "## ⚠️ Operational Risks:" in normalized
+    assert "## 🧪 What To Test This Week:" in normalized
+    assert "## 📚 Skills To Learn Next:" in normalized
+    assert "## 🚦 Production Signal:" in normalized
 
 
 def test_normalize_cloud_vendor_template_matches_reference_shape():
@@ -97,17 +129,20 @@ Cloud database services and storage platforms are shifting quickly.
 ## 🤖 AI Solutions
 - AI item
 
-## 🧭 Architecture Implications
-- Architecture item
+## 🧩 Where This Fits
+- Fit item
 
-## 💸 Cost & Scalability Notes
-- Cost item
+## ⚠️ Operational Risks
+- Risk item
 
-## 🏭 Production Readiness
-- Production item
+## 🧪 What To Test This Week
+- Test item
 
-## 🛠️ Recommended Actions
-- Action item
+## 📚 Skills To Learn Next
+- Skill item
+
+## 🚦 Production Signal
+- Signal item
 """
 
     normalized = _normalize_report_template(
@@ -120,10 +155,11 @@ Cloud database services and storage platforms are shifting quickly.
     assert normalized.startswith("Cloud database services and storage platforms are shifting quickly.")
     assert "## 🗄️ Database Solutions:" in normalized
     assert "## 🤖 AI Solutions:" in normalized
-    assert "## 🧭 Architecture Implications:" in normalized
-    assert "## 💸 Cost & Scalability Notes:" in normalized
-    assert "## 🏭 Production Readiness:" in normalized
-    assert "## 🛠️ Recommended Actions:" in normalized
+    assert "## 🧩 Where This Fits:" in normalized
+    assert "## ⚠️ Operational Risks:" in normalized
+    assert "## 🧪 What To Test This Week:" in normalized
+    assert "## 📚 Skills To Learn Next:" in normalized
+    assert "## 🚦 Production Signal:" in normalized
 
 
 def test_normalize_cloud_vendor_template_builds_database_and_ai_sections():
@@ -167,14 +203,16 @@ def test_normalize_ai_radar_template_builds_distinct_fallback_sections():
 
     architecture = _extract_section(normalized, ["architecture implications"])
     cost = _extract_section(normalized, ["cost & scalability notes"])
-    production = _extract_section(normalized, ["production readiness"])
+    risks = _extract_section(normalized, ["operational risks"])
+    production_signal = _extract_section(normalized, ["production signal"])
 
     assert architecture
     assert cost
-    assert production
+    assert risks
+    assert production_signal
     assert architecture != cost
-    assert architecture != production
-    assert cost != production
+    assert architecture != risks
+    assert cost != risks
 
 
 def test_normalize_ai_radar_template_replaces_repeated_model_sections():
@@ -206,11 +244,11 @@ def test_normalize_ai_radar_template_replaces_repeated_model_sections():
 
     architecture = _extract_section(normalized, ["architecture implications"])
     cost = _extract_section(normalized, ["cost & scalability notes"])
-    production = _extract_section(normalized, ["production readiness"])
+    risks = _extract_section(normalized, ["operational risks"])
 
     assert "Same item one" not in architecture
     assert architecture != cost
-    assert architecture != production
+    assert architecture != risks
 
 
 def test_select_cloud_vendor_articles_balances_vendor_families():

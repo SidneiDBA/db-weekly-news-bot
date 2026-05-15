@@ -36,17 +36,20 @@ Write:
 ## 🤖 AI Solutions
 (vendor AI services and AI-data-platform items)
 
-## 🧭 Architecture Implications
-(bullets)
+## 🧩 Where This Fits
+(which workloads, teams, or environments this belongs in)
 
-## 💸 Cost & Scalability Notes
-(bullets)
+## ⚠️ Operational Risks
+(vendor lock-in, migration, observability, security, or scaling risks)
 
-## 🏭 Production Readiness
-(risks, blockers, maturity)
+## 🧪 What To Test This Week
+(practical lab checks a junior DBA could run)
 
-## 🛠️ Recommended Actions
-(practical next steps)
+## 📚 Skills To Learn Next
+(specific concepts, tools, or patterns worth learning)
+
+## 🚦 Production Signal
+(experimental, watch closely, usable, or mature with short justification)
 
 ## 📎 Sources
 (list URLs)

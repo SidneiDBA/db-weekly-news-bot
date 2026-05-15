@@ -22,6 +22,12 @@ import json
 import re
 
 
+def normalize(text):
+    if not text:
+        return ""
+    return re.sub(r"\s+", " ", str(text)).strip()
+
+
 def _split_trailing_url_punctuation(url):
     suffix = ""
     while url and url[-1] in ".,;:!?":
@@ -342,6 +348,177 @@ def _build_cloud_vendor_solution_items(articles, solution):
 
 def _normalized_list_signature(items):
     return tuple(re.sub(r"\s+", " ", item.strip().lower()) for item in items if item.strip())
+
+
+def _growth_family_for_article(title, url, report_mode):
+    title = normalize(title)
+    if report_mode == "ai_radar":
+        return _ai_radar_topic_family(title, url)
+    if report_mode == "cloud_vendor_radar":
+        return _cloud_vendor_topic_family(title, url)
+    return _weekly_bucket_for_article("", title, url)
+
+
+def _production_signal_for_article(title, url, report_mode):
+    title = normalize(title)
+    text = " ".join(filter(None, [title, url])).lower()
+
+    if any(token in text for token in ["beta", "preview", "research", "agent", "frontier", "prototype"]):
+        label = "Experimental"
+    elif any(token in text for token in ["integration", "lakehouse", "vector", "rag", "inference", "observability"]):
+        label = "Watch closely"
+    elif any(token in text for token in ["managed", "storage", "sql", "database", "backup", "replication", "governance"]):
+        label = "Usable"
+    else:
+        label = "Watch closely"
+
+    family = _growth_family_for_article(title, url, report_mode)
+    reason_map = {
+        "postgresql": "it touches proven operational patterns but still deserves workload-specific validation",
+        "sql_server": "it affects established database operations and should be checked against current standards",
+        "mysql_mariadb": "it can be adopted in familiar environments once backup, upgrade, and rollback paths are clear",
+        "nosql": "distributed behavior and consistency tradeoffs need environment-specific testing",
+        "analytics": "data-platform benefits are real, but integration and cost controls matter before rollout",
+        "streaming": "pipeline dependencies and failure handling should be tested before production adoption",
+        "general_db": "the operational path is plausible, but validation should come before rollout",
+        "retrieval": "retrieval quality, indexing, and latency should be proven before production use",
+        "agents": "guardrails and secure data access need more validation before broad use",
+        "observability": "operational value is high if monitoring and incident response are already mature",
+        "inference": "capacity, serving stability, and spend need to be tested on real workloads",
+        "data_platform": "integration quality and governance maturity determine whether it is production-ready",
+        "general_ai": "the concept is useful, but operational controls need to catch up",
+        "managed_db": "migration fit and service limits should be validated against current operational standards",
+        "storage_platform": "adoption depends on data layout, governance, and recovery planning",
+        "ai_services": "model operations and data access controls should be tested before production rollout",
+        "operations": "it is useful if the team can support the monitoring and incident workflow it requires",
+        "general_cloud": "it deserves closer review before it changes a stable production platform",
+    }
+
+    return (
+        f"{label}: {reason_map.get(family, 'it still needs a clear fit, test plan, and rollback path')}. "
+        f"Reference item: {title} ({_canonicalize_url(url)})."
+    )
+
+
+def _build_growth_items(articles, report_mode, section):
+    items = []
+    for title, url in articles[:3]:
+        title = normalize(title)
+        canonical_url = _canonicalize_url(url)
+        family = _growth_family_for_article(title, canonical_url, report_mode)
+
+        if section == "care":
+            templates = {
+                "postgresql": f"{title} matters because PostgreSQL-style changes often affect indexing, replication, or query behavior that DBAs support directly ({canonical_url}).",
+                "sql_server": f"{title} matters because SQL Server platform changes can alter maintenance, tuning, or service expectations in production ({canonical_url}).",
+                "mysql_mariadb": f"{title} matters because MySQL and MariaDB operations usually surface through upgrades, compatibility, or performance work ({canonical_url}).",
+                "nosql": f"{title} matters because distributed data systems change operational expectations around scaling, consistency, and troubleshooting ({canonical_url}).",
+                "analytics": f"{title} matters because analytics and lakehouse tooling increasingly affects the DBA boundary around storage, governance, and performance ({canonical_url}).",
+                "streaming": f"{title} matters because streaming platforms now influence ingestion reliability, latency, and downstream database behavior ({canonical_url}).",
+                "general_db": f"{title} matters because it can change the practical work a DBA does around reliability, tuning, or platform selection ({canonical_url}).",
+                "retrieval": f"{title} matters because retrieval and indexing quality now shape how AI features touch production data systems ({canonical_url}).",
+                "agents": f"{title} matters because agent workflows increase pressure on permissions, observability, and safe access to operational data ({canonical_url}).",
+                "observability": f"{title} matters because better monitoring is one of the fastest ways a junior DBA can reduce operational risk ({canonical_url}).",
+                "inference": f"{title} matters because AI serving and GPU-backed workloads increasingly sit next to core data-platform operations ({canonical_url}).",
+                "data_platform": f"{title} matters because AI and data-platform boundaries are merging, and DBAs need to understand the operational tradeoffs ({canonical_url}).",
+                "general_ai": f"{title} matters because AI platform changes now affect database architecture, support models, and production operations ({canonical_url}).",
+                "managed_db": f"{title} matters because managed vendor database features can change how DBAs think about service boundaries, support, and migration risk ({canonical_url}).",
+                "storage_platform": f"{title} matters because storage-platform decisions affect performance, governance, and recovery strategy across data estates ({canonical_url}).",
+                "ai_services": f"{title} matters because vendor AI services increasingly depend on data-platform design, access patterns, and governance ({canonical_url}).",
+                "operations": f"{title} matters because operations maturity is often the difference between a useful platform feature and an incident source ({canonical_url}).",
+                "general_cloud": f"{title} matters because cloud platform changes can quietly reshape database responsibilities and service expectations ({canonical_url}).",
+            }
+        elif section == "fit":
+            templates = {
+                "postgresql": f"{title} fits teams running transactional systems, replication-heavy estates, or performance-sensitive PostgreSQL services ({canonical_url}).",
+                "sql_server": f"{title} fits SQL Server environments that depend on predictable maintenance, compatibility, and enterprise support models ({canonical_url}).",
+                "mysql_mariadb": f"{title} fits operational teams managing common web, SaaS, or mixed open-source relational workloads ({canonical_url}).",
+                "nosql": f"{title} fits high-scale distributed applications where consistency, shard design, or ingestion throughput matters ({canonical_url}).",
+                "analytics": f"{title} fits lakehouse, warehouse, and mixed analytics environments where storage layout and governance are shared concerns ({canonical_url}).",
+                "streaming": f"{title} fits event-driven systems where ingestion latency and downstream persistence need to stay predictable ({canonical_url}).",
+                "general_db": f"{title} fits teams evaluating practical platform changes rather than purely academic or vendor-marketing claims ({canonical_url}).",
+                "retrieval": f"{title} fits teams building RAG, semantic search, or AI features that depend on reliable retrieval quality ({canonical_url}).",
+                "agents": f"{title} fits environments experimenting with workflow automation or tool-using AI against operational datasets ({canonical_url}).",
+                "observability": f"{title} fits teams trying to mature monitoring, incident response, and troubleshooting around AI or data workloads ({canonical_url}).",
+                "inference": f"{title} fits organizations running model-serving, fine-tuning, or GPU-backed platform services ({canonical_url}).",
+                "data_platform": f"{title} fits data-platform teams responsible for both analytical infrastructure and AI-adjacent workloads ({canonical_url}).",
+                "general_ai": f"{title} fits teams mapping AI capabilities to concrete platform responsibilities and support boundaries ({canonical_url}).",
+                "managed_db": f"{title} fits teams evaluating managed database adoption, migration, or multi-vendor service tradeoffs ({canonical_url}).",
+                "storage_platform": f"{title} fits storage-heavy environments with lakehouse, warehouse, or object-store coordination needs ({canonical_url}).",
+                "ai_services": f"{title} fits data teams adopting vendor AI services that must coexist with governed production data ({canonical_url}).",
+                "operations": f"{title} fits teams that need stronger operational discipline before scaling vendor-managed services ({canonical_url}).",
+                "general_cloud": f"{title} fits platform teams comparing vendor services across cloud operations, portability, and support models ({canonical_url}).",
+            }
+        elif section == "risks":
+            templates = {
+                "postgresql": f"{title} should be reviewed for upgrade complexity, query-plan changes, and replication side effects before adoption ({canonical_url}).",
+                "sql_server": f"{title} should be reviewed for licensing, compatibility, and operational dependency on Microsoft-specific tooling ({canonical_url}).",
+                "mysql_mariadb": f"{title} should be reviewed for version drift, tooling compatibility, and performance regression risk ({canonical_url}).",
+                "nosql": f"{title} should be reviewed for consistency tradeoffs, operational blast radius, and troubleshooting complexity ({canonical_url}).",
+                "analytics": f"{title} should be reviewed for governance gaps, cost surprises, and weak rollback paths across data-platform layers ({canonical_url}).",
+                "streaming": f"{title} should be reviewed for downstream dependency risk, replay complexity, and incident recovery paths ({canonical_url}).",
+                "general_db": f"{title} should be reviewed for migration, observability, and rollback risk before any production decision ({canonical_url}).",
+                "retrieval": f"{title} should be reviewed for weak recall, bad indexing assumptions, and latency surprises in production ({canonical_url}).",
+                "agents": f"{title} should be reviewed for permission sprawl, unsafe actions, and poor failure isolation ({canonical_url}).",
+                "observability": f"{title} should be reviewed for alert quality, telemetry cost, and operational noise ({canonical_url}).",
+                "inference": f"{title} should be reviewed for GPU spend, serving instability, and workload-placement mistakes ({canonical_url}).",
+                "data_platform": f"{title} should be reviewed for governance gaps, data movement risk, and operational sprawl ({canonical_url}).",
+                "general_ai": f"{title} should be reviewed for unclear production fit, weak controls, and high implementation cost ({canonical_url}).",
+                "managed_db": f"{title} should be reviewed for vendor lock-in, migration friction, and service-limit surprises ({canonical_url}).",
+                "storage_platform": f"{title} should be reviewed for data layout mistakes, recovery gaps, and access-pattern cost drift ({canonical_url}).",
+                "ai_services": f"{title} should be reviewed for data exposure, model-governance gaps, and integration risk ({canonical_url}).",
+                "operations": f"{title} should be reviewed for operational overhead, alert fatigue, and response-readiness gaps ({canonical_url}).",
+                "general_cloud": f"{title} should be reviewed for portability risk, service sprawl, and unclear ownership boundaries ({canonical_url}).",
+            }
+        elif section == "test":
+            templates = {
+                "postgresql": f"Lab this week: test query plans, replication behavior, or backup and restore assumptions. Start with {title} ({canonical_url}).",
+                "sql_server": f"Lab this week: test maintenance workflows, compatibility, and rollback steps in a non-production SQL Server environment. Start with {title} ({canonical_url}).",
+                "mysql_mariadb": f"Lab this week: test upgrades, performance baselines, and configuration drift in a sandbox. Start with {title} ({canonical_url}).",
+                "nosql": f"Lab this week: test shard behavior, failure handling, or consistency expectations before rollout. Start with {title} ({canonical_url}).",
+                "analytics": f"Lab this week: test storage layout, governance controls, and query-cost patterns on realistic datasets. Start with {title} ({canonical_url}).",
+                "streaming": f"Lab this week: test replay, backpressure, and downstream recovery behavior under load. Start with {title} ({canonical_url}).",
+                "general_db": f"Lab this week: build a small check for performance, compatibility, or observability impact. Start with {title} ({canonical_url}).",
+                "retrieval": f"Lab this week: test recall quality, retrieval latency, and index maintenance on a representative dataset. Start with {title} ({canonical_url}).",
+                "agents": f"Lab this week: test permission boundaries, auditability, and failure handling before broader use. Start with {title} ({canonical_url}).",
+                "observability": f"Lab this week: test alerts, dashboards, and troubleshooting workflows during a simulated incident. Start with {title} ({canonical_url}).",
+                "inference": f"Lab this week: test throughput, cost, and serving stability with a controlled workload. Start with {title} ({canonical_url}).",
+                "data_platform": f"Lab this week: test data movement, governance, and operational ownership boundaries in a lab. Start with {title} ({canonical_url}).",
+                "general_ai": f"Lab this week: test how AI features interact with production data access and operational controls. Start with {title} ({canonical_url}).",
+                "managed_db": f"Lab this week: test service limits, failover expectations, and migration steps before adoption. Start with {title} ({canonical_url}).",
+                "storage_platform": f"Lab this week: test data layout, lifecycle rules, and recovery expectations on realistic workloads. Start with {title} ({canonical_url}).",
+                "ai_services": f"Lab this week: test model access patterns, governance controls, and integration behavior with production-like data. Start with {title} ({canonical_url}).",
+                "operations": f"Lab this week: run a small operational readiness exercise before trusting it in production. Start with {title} ({canonical_url}).",
+                "general_cloud": f"Lab this week: test the operational fit before adding another vendor dependency to the stack. Start with {title} ({canonical_url}).",
+            }
+        elif section == "skills":
+            templates = {
+                "postgresql": f"Next skill to build: indexing, replication, and PostgreSQL performance diagnostics. Start from {title} ({canonical_url}).",
+                "sql_server": f"Next skill to build: SQL Server maintenance, wait analysis, and recovery planning. Start from {title} ({canonical_url}).",
+                "mysql_mariadb": f"Next skill to build: MySQL internals, tuning, and upgrade safety. Start from {title} ({canonical_url}).",
+                "nosql": f"Next skill to build: consistency models, partitioning, and distributed troubleshooting. Start from {title} ({canonical_url}).",
+                "analytics": f"Next skill to build: lakehouse formats, query engines, and data governance. Start from {title} ({canonical_url}).",
+                "streaming": f"Next skill to build: streaming reliability, offsets, and event-driven recovery patterns. Start from {title} ({canonical_url}).",
+                "general_db": f"Next skill to build: capacity planning, observability, and operational tradeoffs. Start from {title} ({canonical_url}).",
+                "retrieval": f"Next skill to build: embeddings, ANN indexing, and retrieval-quality evaluation. Start from {title} ({canonical_url}).",
+                "agents": f"Next skill to build: agent safety, tool permissions, and workflow observability. Start from {title} ({canonical_url}).",
+                "observability": f"Next skill to build: telemetry design, SLOs, and incident response patterns. Start from {title} ({canonical_url}).",
+                "inference": f"Next skill to build: model serving, throughput planning, and cost controls. Start from {title} ({canonical_url}).",
+                "data_platform": f"Next skill to build: data platform architecture, governance, and cross-team ownership. Start from {title} ({canonical_url}).",
+                "general_ai": f"Next skill to build: how AI capabilities interact with real production data systems. Start from {title} ({canonical_url}).",
+                "managed_db": f"Next skill to build: managed database SLAs, limits, and migration patterns. Start from {title} ({canonical_url}).",
+                "storage_platform": f"Next skill to build: object storage, table formats, and workload-aware data layout. Start from {title} ({canonical_url}).",
+                "ai_services": f"Next skill to build: model governance, serving interfaces, and secure data integration. Start from {title} ({canonical_url}).",
+                "operations": f"Next skill to build: production operations, observability, and service ownership. Start from {title} ({canonical_url}).",
+                "general_cloud": f"Next skill to build: vendor tradeoffs, portability, and operational boundaries. Start from {title} ({canonical_url}).",
+            }
+        else:
+            items.append(_production_signal_for_article(title, canonical_url, report_mode))
+            continue
+
+        items.append(templates.get(family, f"{title} is worth studying for its practical platform and operational implications ({canonical_url})."))
+
+    return items
 
 
 def _weekly_bucket_for_article(source_name, title, url):
@@ -927,19 +1104,36 @@ def _bucket_cloud_vendor_sources(source_names):
 def _format_weekly_template(md_text, articles, source_urls):
     article_lines = []
     for index, (title, url) in enumerate(articles, start=1):
+        title = normalize(title)
         article_lines.append(f"### {index}. {title}\n{_canonicalize_url(url)}")
 
     trends = _extract_list_items(_extract_section(md_text, ["trends observed", "trends"]))
     if not trends:
-        trends = [title for title, _ in articles]
+        trends = [normalize(title) for title, _ in articles]
 
-    why_this_matters = _extract_list_items(_extract_section(md_text, ["why this matters", "why this matter"]))
+    why_this_matters = _extract_list_items(_extract_section(md_text, ["why a dba should care", "why this matters", "why this matter"]))
+    where_this_fits = _extract_list_items(_extract_section(md_text, ["where this fits", "fit"]))
+    operational_risks = _extract_list_items(_extract_section(md_text, ["operational risks", "risks"]))
+    test_this_week = _extract_list_items(_extract_section(md_text, ["what to test this week", "test this week", "what to test"]))
+    skills_to_learn = _extract_list_items(_extract_section(md_text, ["skills to learn next", "skills", "learn next"]))
+    production_signal = _extract_list_items(_extract_section(md_text, ["production signal", "maturity signal", "production readiness"]))
+
     if not why_this_matters:
-        why_this_matters = [
+        why_this_matters = _build_growth_items(articles, "weekly", "care") or [
             "Tracks the database and data-platform changes most likely to affect production operations.",
             "Helps prioritize follow-up investigation on tools, compatibility, and operational risk.",
             "Keeps DBA teams aligned on practical developments across the current article set.",
         ]
+    if not where_this_fits:
+        where_this_fits = _build_growth_items(articles, "weekly", "fit")
+    if not operational_risks:
+        operational_risks = _build_growth_items(articles, "weekly", "risks")
+    if not test_this_week:
+        test_this_week = _build_growth_items(articles, "weekly", "test")
+    if not skills_to_learn:
+        skills_to_learn = _build_growth_items(articles, "weekly", "skills")
+    if not production_signal:
+        production_signal = _build_growth_items(articles, "weekly", "signal")
 
     sources_block = _build_sources_block(source_urls)
 
@@ -947,8 +1141,18 @@ def _format_weekly_template(md_text, articles, source_urls):
         "\n\n".join(article_lines)
         + "\n\n## Trends Observed:\n"
         + "\n".join(f"{index}. {item}" for index, item in enumerate(trends, start=1))
-        + "\n\n## Why This Matters:\n"
+        + "\n\n## Why A DBA Should Care:\n"
         + "\n".join(f"{index}. {item}" for index, item in enumerate(why_this_matters, start=1))
+        + "\n\n## Where This Fits:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(where_this_fits, start=1))
+        + "\n\n## Operational Risks:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(operational_risks, start=1))
+        + "\n\n## What To Test This Week:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(test_this_week, start=1))
+        + "\n\n## Skills To Learn Next:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(skills_to_learn, start=1))
+        + "\n\n## Production Signal:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(production_signal, start=1))
         + "\n\n## 📎 Sources\n"
         + sources_block
         + "\n"
@@ -965,16 +1169,23 @@ def _format_ai_radar_template(md_text, articles, source_urls):
 
     architecture = _extract_list_items(_extract_section(md_text, ["architecture implications"]))
     cost = _extract_list_items(_extract_section(md_text, ["cost & scalability notes", "cost", "scalability"]))
-    production = _extract_list_items(_extract_section(md_text, ["production readiness", "risks", "blockers"]))
-    actions = _extract_list_items(_extract_section(md_text, ["recommended actions", "actions"]))
+    why_this_matters = _extract_list_items(_extract_section(md_text, ["why a dba should care", "why this matters"]))
+    operational_risks = _extract_list_items(_extract_section(md_text, ["operational risks", "production readiness", "risks", "blockers"]))
+    test_this_week = _extract_list_items(_extract_section(md_text, ["what to test this week", "recommended actions", "actions", "what to test"]))
+    skills_to_learn = _extract_list_items(_extract_section(md_text, ["skills to learn next", "skills", "learn next"]))
+    production_signal = _extract_list_items(_extract_section(md_text, ["production signal", "maturity signal", "production readiness"]))
 
     architecture_fallback = _build_ai_radar_fallback_items(articles, "architecture")
     cost_fallback = _build_ai_radar_fallback_items(articles, "cost")
-    production_fallback = _build_ai_radar_fallback_items(articles, "production")
+    risks_fallback = _build_ai_radar_fallback_items(articles, "production")
+    care_fallback = _build_growth_items(articles, "ai_radar", "care")
+    test_fallback = _build_growth_items(articles, "ai_radar", "test")
+    skills_fallback = _build_growth_items(articles, "ai_radar", "skills")
+    signal_fallback = _build_growth_items(articles, "ai_radar", "signal")
 
     architecture_signature = _normalized_list_signature(architecture)
     cost_signature = _normalized_list_signature(cost)
-    production_signature = _normalized_list_signature(production)
+    production_signature = _normalized_list_signature(operational_risks)
     repeated_sections = (
         architecture_signature
         and architecture_signature == cost_signature == production_signature
@@ -984,18 +1195,20 @@ def _format_ai_radar_template(md_text, articles, source_urls):
         architecture = architecture_fallback
     if not cost:
         cost = cost_fallback
-    if not production:
-        production = production_fallback
+    if not why_this_matters:
+        why_this_matters = care_fallback
+    if not operational_risks:
+        operational_risks = risks_fallback
+    if not test_this_week:
+        test_this_week = test_fallback
+    if not skills_to_learn:
+        skills_to_learn = skills_fallback
+    if not production_signal:
+        production_signal = signal_fallback
     if repeated_sections:
         architecture = architecture_fallback
         cost = cost_fallback
-        production = production_fallback
-    if not actions:
-        actions = [
-            "Review the linked articles for concrete architectural changes before adopting new AI-data patterns.",
-            "Prioritize experiments that improve retrieval quality, indexing strategy, or production readiness.",
-            "Track cost and operational impact for any LLM, vector, or RAG feature introduced into the platform.",
-        ]
+        operational_risks = risks_fallback
 
     sources_block = _build_sources_block(source_urls)
 
@@ -1005,10 +1218,16 @@ def _format_ai_radar_template(md_text, articles, source_urls):
         + "\n".join(f"{index}. {item}" for index, item in enumerate(architecture, start=1))
         + "\n\n## 💸 Cost & Scalability Notes:\n"
         + "\n".join(f"{index}. {item}" for index, item in enumerate(cost, start=1))
-        + "\n\n## 🏭 Production Readiness:\n"
-        + "\n".join(f"{index}. {item}" for index, item in enumerate(production, start=1))
-        + "\n\n## 🛠️ Recommended Actions:\n"
-        + "\n".join(f"{index}. {item}" for index, item in enumerate(actions, start=1))
+        + "\n\n## 🎯 Why A DBA Should Care:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(why_this_matters, start=1))
+        + "\n\n## ⚠️ Operational Risks:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(operational_risks, start=1))
+        + "\n\n## 🧪 What To Test This Week:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(test_this_week, start=1))
+        + "\n\n## 📚 Skills To Learn Next:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(skills_to_learn, start=1))
+        + "\n\n## 🚦 Production Signal:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(production_signal, start=1))
         + "\n\n## 📎 Sources\n"
         + sources_block
         + "\n"
@@ -1025,45 +1244,46 @@ def _format_cloud_vendor_template(md_text, articles, source_urls):
 
     database_solutions = _extract_list_items(_extract_section(md_text, ["database solutions", "database services", "database platforms"]))
     ai_solutions = _extract_list_items(_extract_section(md_text, ["ai solutions", "ai services", "ai platforms"]))
-    architecture = _extract_list_items(_extract_section(md_text, ["architecture implications", "architecture"]))
-    cost = _extract_list_items(_extract_section(md_text, ["cost & scalability notes", "cost", "scalability"]))
-    production = _extract_list_items(_extract_section(md_text, ["production readiness", "risks", "blockers"]))
-    actions = _extract_list_items(_extract_section(md_text, ["recommended actions", "actions"]))
+    where_this_fits = _extract_list_items(_extract_section(md_text, ["where this fits", "fit", "architecture implications", "architecture"]))
+    operational_risks = _extract_list_items(_extract_section(md_text, ["operational risks", "production readiness", "risks", "blockers"]))
+    test_this_week = _extract_list_items(_extract_section(md_text, ["what to test this week", "recommended actions", "actions", "what to test"]))
+    skills_to_learn = _extract_list_items(_extract_section(md_text, ["skills to learn next", "skills", "learn next"]))
+    production_signal = _extract_list_items(_extract_section(md_text, ["production signal", "maturity signal", "production readiness"]))
 
     database_fallback = _build_cloud_vendor_solution_items(articles, "database")
     ai_fallback = _build_cloud_vendor_solution_items(articles, "ai")
-    architecture_fallback = _build_cloud_vendor_fallback_items(articles, "architecture")
-    cost_fallback = _build_cloud_vendor_fallback_items(articles, "cost")
-    production_fallback = _build_cloud_vendor_fallback_items(articles, "production")
+    fit_fallback = _build_growth_items(articles, "cloud_vendor_radar", "fit")
+    risks_fallback = _build_growth_items(articles, "cloud_vendor_radar", "risks")
+    test_fallback = _build_growth_items(articles, "cloud_vendor_radar", "test")
+    skills_fallback = _build_growth_items(articles, "cloud_vendor_radar", "skills")
+    signal_fallback = _build_growth_items(articles, "cloud_vendor_radar", "signal")
 
-    architecture_signature = _normalized_list_signature(architecture)
-    cost_signature = _normalized_list_signature(cost)
-    production_signature = _normalized_list_signature(production)
+    architecture_signature = _normalized_list_signature(where_this_fits)
+    cost_signature = _normalized_list_signature(operational_risks)
+    production_signature = _normalized_list_signature(production_signal)
     repeated_sections = (
         architecture_signature
         and architecture_signature == cost_signature == production_signature
     )
 
     if not database_solutions:
-        database_solutions = database_fallback or architecture_fallback[:3]
+        database_solutions = database_fallback or fit_fallback[:3]
     if not ai_solutions:
-        ai_solutions = ai_fallback or architecture_fallback[:3]
-    if not architecture:
-        architecture = architecture_fallback
-    if not cost:
-        cost = cost_fallback
-    if not production:
-        production = production_fallback
+        ai_solutions = ai_fallback or fit_fallback[:3]
+    if not where_this_fits:
+        where_this_fits = fit_fallback
+    if not operational_risks:
+        operational_risks = risks_fallback
+    if not test_this_week:
+        test_this_week = test_fallback
+    if not skills_to_learn:
+        skills_to_learn = skills_fallback
+    if not production_signal:
+        production_signal = signal_fallback
     if repeated_sections:
-        architecture = architecture_fallback
-        cost = cost_fallback
-        production = production_fallback
-    if not actions:
-        actions = [
-            "Review the linked vendor updates for changes that affect database service choices, storage design, or AI integration patterns.",
-            "Prioritize experiments that clarify cost, portability, and operational tradeoffs before broader rollout.",
-            "Track production constraints such as service limits, observability gaps, and vendor lock-in risk.",
-        ]
+        where_this_fits = fit_fallback
+        operational_risks = risks_fallback
+        production_signal = signal_fallback
 
     sources_block = _build_sources_block(source_urls)
 
@@ -1073,14 +1293,16 @@ def _format_cloud_vendor_template(md_text, articles, source_urls):
         + "\n".join(f"{index}. {item}" for index, item in enumerate(database_solutions, start=1))
         + "\n\n## 🤖 AI Solutions:\n"
         + "\n".join(f"{index}. {item}" for index, item in enumerate(ai_solutions, start=1))
-        + "\n\n## 🧭 Architecture Implications:\n"
-        + "\n".join(f"{index}. {item}" for index, item in enumerate(architecture, start=1))
-        + "\n\n## 💸 Cost & Scalability Notes:\n"
-        + "\n".join(f"{index}. {item}" for index, item in enumerate(cost, start=1))
-        + "\n\n## 🏭 Production Readiness:\n"
-        + "\n".join(f"{index}. {item}" for index, item in enumerate(production, start=1))
-        + "\n\n## 🛠️ Recommended Actions:\n"
-        + "\n".join(f"{index}. {item}" for index, item in enumerate(actions, start=1))
+        + "\n\n## 🧩 Where This Fits:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(where_this_fits, start=1))
+        + "\n\n## ⚠️ Operational Risks:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(operational_risks, start=1))
+        + "\n\n## 🧪 What To Test This Week:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(test_this_week, start=1))
+        + "\n\n## 📚 Skills To Learn Next:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(skills_to_learn, start=1))
+        + "\n\n## 🚦 Production Signal:\n"
+        + "\n".join(f"{index}. {item}" for index, item in enumerate(production_signal, start=1))
         + "\n\n## 📎 Sources\n"
         + sources_block
         + "\n"
