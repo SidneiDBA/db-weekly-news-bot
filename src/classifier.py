@@ -30,6 +30,90 @@ def normalize(text):
     text = text.strip()
     return text
 
+
+def coerce_label(value, default):
+    if isinstance(value, str):
+        normalized = normalize(value)
+        return normalized or default
+
+    if isinstance(value, (int, float, bool)):
+        return str(value)
+
+    if isinstance(value, list):
+        for item in value:
+            coerced = coerce_label(item, "")
+            if coerced:
+                return coerced
+        return default
+
+    if isinstance(value, dict):
+        for key in ["name", "label", "value", "topic", "engine", "db_engine", "type"]:
+            if key in value:
+                coerced = coerce_label(value.get(key), "")
+                if coerced:
+                    return coerced
+        compact = normalize(json.dumps(value, sort_keys=True))
+        return compact or default
+
+    return default
+
+
+def coerce_identifier(value, default=0):
+    if isinstance(value, bool):
+        return int(value)
+
+    if isinstance(value, int):
+        return value
+
+    if isinstance(value, float):
+        return int(value)
+
+    if isinstance(value, str):
+        try:
+            return int(value.strip())
+        except (TypeError, ValueError):
+            return default
+
+    if isinstance(value, dict):
+        for key in ["id", "raw_id", "value"]:
+            if key in value:
+                return coerce_identifier(value.get(key), default)
+
+    if isinstance(value, list):
+        for item in value:
+            coerced = coerce_identifier(item, None)
+            if coerced is not None:
+                return coerced
+
+    return default
+
+
+def coerce_number(value, default=0.0):
+    if isinstance(value, bool):
+        return float(int(value))
+
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    if isinstance(value, str):
+        try:
+            return float(value.strip())
+        except (TypeError, ValueError):
+            return default
+
+    if isinstance(value, dict):
+        for key in ["score", "value", "impact_score"]:
+            if key in value:
+                return coerce_number(value.get(key), default)
+
+    if isinstance(value, list):
+        for item in value:
+            coerced = coerce_number(item, None)
+            if coerced is not None:
+                return coerced
+
+    return default
+
 def clamp01(value, default=0.5):
     try:
         numeric = float(value)
@@ -73,6 +157,17 @@ def calculate_score(article, domain, source, llm_analysis, mode="weekly"):
             architectural_impact * 0.15 +
             production_impact * 0.10 +
             security_impact * 0.10 +
+            retrieval_complexity * 0.05
+        )
+    elif mode == "cloud_vendor_radar":
+        final_score = (
+            domain_weight * 0.20 +
+            source_weight * 0.15 +
+            keyword_score * 0.10 +
+            llm_relevance * 0.20 +
+            architectural_impact * 0.15 +
+            production_impact * 0.10 +
+            security_impact * 0.05 +
             retrieval_complexity * 0.05
         )
     else:
@@ -124,7 +219,11 @@ def classify(allowed_sources=None, mode="weekly"):
     default_weight = clamp01(config.get("global", {}).get("default_weight", 0.5), default=0.5)
 
     root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    prompt_file = "classify_ai_radar.txt" if mode == "ai_radar" else "classify_weekly.txt"
+    prompt_file = {
+        "weekly": "classify_weekly.txt",
+        "ai_radar": "classify_ai_radar.txt",
+        "cloud_vendor_radar": "classify_cloud_vendor.txt",
+    }.get(mode, "classify_weekly.txt")
     prompt_path = os.path.join(root, "prompts", prompt_file)
 
     if allowed_sources:
@@ -216,10 +315,10 @@ def classify(allowed_sources=None, mode="weekly"):
             (raw_id, db_engine, topic, impact_score)
             VALUES (%s, %s, %s, %s)
         """, (
-            raw_id,
-            llm_raw.get("db_engine", "general"),
-            llm_raw.get("topic", "tooling"),
-            impact_score
+            coerce_identifier(raw_id),
+            coerce_label(llm_raw.get("db_engine", "general"), "general"),
+            coerce_label(llm_raw.get("topic", "tooling"), "tooling"),
+            coerce_number(impact_score)
         ))
 
         processed += 1

@@ -29,6 +29,12 @@
           "priority": "medium"
         },
         {
+          "name": "Oracle Database Blog",
+          "url": "https://news.google.com/rss/search?q=Oracle+Database+Cloud&hl=en-US&gl=US&ceid=US:en",
+          "weight": 0.8,
+          "priority": "medium"
+        },
+        {
           "name": "Postgres Weekly",
           "url": "https://postgresweekly.com/rss/",
           "weight": 0.85,
@@ -180,6 +186,16 @@
           "weight": 0.9
         },
         {
+          "name": "Oracle AI and Data Science Blog",
+          "url": "https://news.google.com/rss/search?q=Oracle+Cloud+AI+database&hl=en-US&gl=US&ceid=US:en",
+          "weight": 0.85
+        },
+        {
+          "name": "Huawei Cloud AI Updates",
+          "url": "https://news.google.com/rss/search?q=Huawei+Cloud+database+AI&hl=en-US&gl=US&ceid=US:en",
+          "weight": 0.8
+        },
+        {
           "name": "Pinecone Blog",
           "url": "https://www.pinecone.io/rss",
           "weight": 0.85
@@ -238,12 +254,12 @@
       "sources": [
         {
           "name": "Snowflake Blog",
-          "url": "https://clickhouse.com/blog/index.xml",
+          "url": "https://news.google.com/rss/search?q=Snowflake+Data+Cloud&hl=en-US&gl=US&ceid=US:en",
           "weight": 0.9
         },
         {
           "name": "Databricks Blog",
-          "url": "https://www.starburst.io/blog/rss.xml",
+          "url": "https://www.databricks.com/feed",
           "weight": 0.9
         },
         {
@@ -254,6 +270,21 @@
         {
           "name": "Google Cloud Blog",
           "url": "https://cloudblog.withgoogle.com/rss/",
+          "weight": 0.8
+        },
+        {
+          "name": "Azure Blog",
+          "url": "https://azure.microsoft.com/en-us/blog/feed/",
+          "weight": 0.8
+        },
+        {
+          "name": "Oracle Cloud Infrastructure Blog",
+          "url": "https://news.google.com/rss/search?q=Oracle+Cloud+storage+database&hl=en-US&gl=US&ceid=US:en",
+          "weight": 0.8
+        },
+        {
+          "name": "Huawei Cloud Updates",
+          "url": "https://news.google.com/rss/search?q=Huawei+Cloud+database+storage&hl=en-US&gl=US&ceid=US:en",
           "weight": 0.8
         },
         {

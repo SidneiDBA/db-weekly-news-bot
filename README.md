@@ -141,7 +141,24 @@ Recommended one-liner with RSS pre-check enabled:
 REPORT_MODE=ai_radar USE_OLLAMA=true RSS_HEALTH_CHECK_TIMEOUT=5 python3 src/main.py
 ```
 
-### Option D: Local `.env` Setup (Copy/Paste)
+### Option D: Cloud Vendor Radar Mode
+Generates `output/cloud_vendor_radar_brief.md` using curated cloud-vendor database, storage, and AI-related sources.
+
+```bash
+cd db-weekly-news-bot
+export USE_OLLAMA=true
+export REPORT_MODE=cloud_vendor_radar
+export RSS_HEALTH_CHECK_TIMEOUT=5
+python3 src/main.py
+```
+
+One-line alternative:
+
+```bash
+REPORT_MODE=cloud_vendor_radar USE_OLLAMA=true python3 src/main.py
+```
+
+### Option E: Local `.env` Setup (Copy/Paste)
 Create a `.env` file in the project root so you don't need to export variables each run:
 
 ```bash
@@ -173,7 +190,7 @@ python3 src/main.py
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `USE_OLLAMA` | `false` | Set to `true` to use real Ollama LLM; `false` uses mock responses |
-| `REPORT_MODE` | `weekly` | `weekly` generates `weekly_brief.md`; `ai_radar` generates `ai_radar_brief.md` |
+| `REPORT_MODE` | `weekly` | `weekly` generates `weekly_brief.md`; `ai_radar` generates `ai_radar_brief.md`; `cloud_vendor_radar` generates `cloud_vendor_radar_brief.md` |
 | `RSS_HEALTH_CHECK_TIMEOUT` | `0` | Seconds to wait for RSS feed response; `0` disables health check (waits indefinitely); set to `3-5` to skip slow/dead feeds |
 | `OLLAMA_TIMEOUT_SECONDS` | `180` | Per-request timeout for `ollama run`; lower values fail faster on problematic prompts |
 | `MAX_CLASSIFICATIONS_PER_RUN` | `0` | Limit classification rows per run (`0` means unlimited); useful to process backlog in safe batches |

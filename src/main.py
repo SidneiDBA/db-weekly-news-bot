@@ -41,12 +41,60 @@ except json.JSONDecodeError as e:
     config = {}
 
 mode = os.environ.get("REPORT_MODE", "weekly").strip().lower()
-output_file = "ai_radar_brief.md" if mode == "ai_radar" else "weekly_brief.md"
+output_file = {
+    "weekly": "weekly_brief.md",
+    "ai_radar": "ai_radar_brief.md",
+    "cloud_vendor_radar": "cloud_vendor_radar_brief.md",
+}.get(mode, "weekly_brief.md")
 print(f"Report mode: {mode} -> output/{output_file}")
 
 domains_to_process = None
+min_source_weight = None
+source_name_keywords = None
 if mode == "ai_radar":
     domains_to_process = ["ai_data"]
+    min_source_weight = 0.85
+elif mode == "cloud_vendor_radar":
+    domains_to_process = ["relational", "nosql", "storage", "ai_data", "ai_infrastructure"]
+    min_source_weight = 0.8
+    source_name_keywords = [
+        "aws",
+        "amazon",
+        "azure",
+        "sql server",
+        "google cloud",
+        "gcp",
+        "google",
+        "oracle",
+        "oci",
+        "huawei",
+        "huaweicloud",
+        "databricks",
+        "snowflake",
+        "dynamodb",
+        "aurora",
+        "bigquery",
+        "spanner",
+        "cosmos",
+        "alloydb",
+        "autonomous database",
+        "gaussdb",
+    ]
+elif mode == "weekly":
+    domains_to_process = [
+        "relational",
+        "nosql",
+        "storage",
+        "data_compression",
+        "data_engineering",
+        "data_governance",
+        "data_modeling",
+        "data_quality",
+        "data_security",
+        "databases",
+        "real_time_analytics",
+        "streaming",
+    ]
 
 selected_sources = []
 
@@ -58,6 +106,14 @@ if isinstance(config.get("domains"), dict):
         if domains_to_process and domain_name not in domains_to_process:
             continue
         for source in domain_cfg.get("sources", []):
+            if min_source_weight is not None and float(source.get("weight", 0.0)) < min_source_weight:
+                continue
+            if source_name_keywords:
+                haystack = f"{source.get('name', '')} {source.get('url', '')}".lower()
+                if not any(keyword in haystack for keyword in source_name_keywords):
+                    continue
+                if any(keyword in haystack for keyword in ["research", "arxiv"]):
+                    continue
             selected_sources.append(source.get("name", ""))
             try:
                 collect(source["url"], source["name"])
