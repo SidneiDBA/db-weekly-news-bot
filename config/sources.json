@@ -525,7 +525,7 @@
       "sources": [
         {
           "name": "DataHub Blog",
-          "url": "https://datahubproject.io/blog/feed",
+          "url": "https://news.google.com/rss/search?q=DataHub+metadata+blog&hl=en-US&gl=US&ceid=US:en",
           "weight": 0.9
         },
         {
