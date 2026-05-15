@@ -19,6 +19,34 @@ import json
 import time
 import os
 import re
+import shutil
+
+
+def _normalize_json_payload(parsed):
+    if isinstance(parsed, dict):
+        for key in ("response", "result", "classification", "data"):
+            nested = parsed.get(key)
+            if isinstance(nested, dict):
+                return nested
+            if isinstance(nested, list):
+                first_dict = next((item for item in nested if isinstance(item, dict)), None)
+                if first_dict is not None:
+                    return first_dict
+        return parsed
+
+    if isinstance(parsed, list):
+        first_dict = next((item for item in parsed if isinstance(item, dict)), None)
+        if first_dict is not None:
+            return first_dict
+
+    if isinstance(parsed, str):
+        try:
+            nested = json.loads(parsed)
+        except json.JSONDecodeError:
+            return parsed
+        return _normalize_json_payload(nested)
+
+    return parsed
 
 
 def _extract_json_payload(text):
@@ -32,9 +60,17 @@ def _extract_json_payload(text):
 
     try:
         parsed = json.loads(content)
-        return json.dumps(parsed)
+        return json.dumps(_normalize_json_payload(parsed))
     except json.JSONDecodeError:
         pass
+
+    fenced = re.search(r"```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```", content, re.DOTALL | re.IGNORECASE)
+    if fenced:
+        try:
+            parsed = json.loads(fenced.group(1))
+            return json.dumps(_normalize_json_payload(parsed))
+        except json.JSONDecodeError:
+            pass
 
     decoder = json.JSONDecoder()
     for idx, ch in enumerate(content):
@@ -42,7 +78,7 @@ def _extract_json_payload(text):
             continue
         try:
             parsed, _ = decoder.raw_decode(content[idx:])
-            return json.dumps(parsed)
+            return json.dumps(_normalize_json_payload(parsed))
         except json.JSONDecodeError:
             continue
 
@@ -74,6 +110,21 @@ def _mock_markdown_response(prompt):
     )
 
 
+def _ollama_model_name():
+    return os.environ.get("OLLAMA_MODEL", "neural-chat").strip() or "neural-chat"
+
+
+def _ollama_prompt(prompt, response_format):
+    if response_format != "json":
+        return prompt
+
+    return (
+        "Return exactly one valid JSON object and nothing else. "
+        "Do not add markdown fences, labels, explanations, or commentary.\n\n"
+        f"{prompt}"
+    )
+
+
 def call_llm(prompt, use_ollama=None, response_format="json"):
     """Call the LLM using ollama if available, otherwise return mock response.
     
@@ -93,7 +144,6 @@ def call_llm(prompt, use_ollama=None, response_format="json"):
         return _mock_json_response()
     
     # make sure the ollama binary is available before trying to call it
-    import shutil
     if shutil.which("ollama") is None:
         print("ollama executable not found on PATH; using mock response")
         if response_format == "markdown":
@@ -102,11 +152,13 @@ def call_llm(prompt, use_ollama=None, response_format="json"):
     
     # Try to use ollama if enabled
     timeout_seconds = int(os.environ.get("OLLAMA_TIMEOUT_SECONDS", "180"))
+    model_name = _ollama_model_name()
+    llm_prompt = _ollama_prompt(prompt, response_format)
     for attempt in range(2):
         try:
             result = subprocess.run(
-                ["ollama", "run", "neural-chat"],
-                input=prompt,
+                ["ollama", "run", model_name],
+                input=llm_prompt,
                 text=True,
                 capture_output=True,
                 timeout=timeout_seconds
@@ -116,7 +168,7 @@ def call_llm(prompt, use_ollama=None, response_format="json"):
                     payload = _extract_json_payload(result.stdout)
                     if payload is not None:
                         return payload
-                    print("Ollama response did not contain valid JSON payload")
+                    print(f"Ollama response did not contain valid JSON payload for model {model_name}")
                 else:
                     return result.stdout
             print(f"Ollama error: {result.stderr}")

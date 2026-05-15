@@ -158,6 +158,32 @@ One-line alternative:
 REPORT_MODE=cloud_vendor_radar USE_OLLAMA=true python3 src/main.py
 ```
 
+### Option F: Check Dependencies And Run All Three Modes
+Use the wrapper script when you want one command that validates Python dependencies, PostgreSQL connectivity, Ollama availability, the model download, and then runs `weekly`, `ai_radar`, and `cloud_vendor_radar` in sequence.
+
+```bash
+python3 scripts/run_all_reports.py
+```
+
+Short shell wrapper:
+
+```bash
+./scripts/run-all-reports
+```
+
+If you want to skip the interactive batch-size prompt:
+
+```bash
+python3 scripts/run_all_reports.py --batch-size 25
+```
+
+Or with the short wrapper:
+
+```bash
+./scripts/run-all-reports --batch-size 25
+```
+
+
 ### Option E: Local `.env` Setup (Copy/Paste)
 Create a `.env` file in the project root so you don't need to export variables each run:
 

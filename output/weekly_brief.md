@@ -10,8 +10,8 @@ https://www.percona.com/blog/run-an-alter-table-for-a-huge-table-in-aurora/
 ### 4. Aurora serverless: Faster performance, enhanced scaling, and still scales down to zero
 https://aws.amazon.com/blogs/database/aurora-serverless-faster-performance-enhanced-scaling-and-still-scales-down-to-zero/
 
-### 5. Starburst Collaborates with Google Cloud to Integrate Starburst Enterprise with BigLake Metastore
-https://www.starburst.io/blog/starburst-google-biglake-metastore-integration
+### 5. Expanded interoperability with Unity Catalog Open APIs
+https://www.databricks.com/blog/expanded-interoperability-unity-catalog-open-apis
 
 ### 6. Me and my shadow (link!): Disaster recovery replication made easy
 https://www.redpanda.com/blog/shadow-linking-disaster-recovery-replication-made-easy
@@ -24,7 +24,7 @@ https://news.google.com/rss/articles/CBMiowFBVV95cUxOaEVyUTZVTDA2aUw1YVoyeHRIUmg
 2. SQL MCP Server as an App Service
 3. Run an ALTER TABLE for a huge table in Aurora
 4. Aurora serverless: Faster performance, enhanced scaling, and still scales down to zero
-5. Starburst Collaborates with Google Cloud to Integrate Starburst Enterprise with BigLake Metastore
+5. Expanded interoperability with Unity Catalog Open APIs
 6. Me and my shadow (link!): Disaster recovery replication made easy
 7. Well-Architected design for resiliency with Oracle Database@AWS - Amazon Web Services (AWS)
 
@@ -63,6 +63,6 @@ https://news.google.com/rss/articles/CBMiowFBVV95cUxOaEVyUTZVTDA2aUw1YVoyeHRIUmg
 - https://devblogs.microsoft.com/azure-sql/sql-mcp-server-app-service/
 - https://www.percona.com/blog/run-an-alter-table-for-a-huge-table-in-aurora/
 - https://aws.amazon.com/blogs/database/aurora-serverless-faster-performance-enhanced-scaling-and-still-scales-down-to-zero/
-- https://www.starburst.io/blog/starburst-google-biglake-metastore-integration
+- https://www.databricks.com/blog/expanded-interoperability-unity-catalog-open-apis
 - https://www.redpanda.com/blog/shadow-linking-disaster-recovery-replication-made-easy
 - https://news.google.com/rss/articles/CBMiowFBVV95cUxOaEVyUTZVTDA2aUw1YVoyeHRIUmgwRi1DM0JUeXdFRzZnaUVEUi1VNWl1TmtlS0JXMjNBQ0p3MlFlcExvSUZWR1NNRkNPTmsyS25CTTJvSXE5NXc4dUV4Sk1qMmZRaFZMM19LQkV5U2czLTg0UWozNUFTaFJSUW40ZWZyMkRxSURhLWRxTHE1ekdqOUJhemZKVU1tbHc2UDYzQVdV?oc=5
